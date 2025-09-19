@@ -1,9 +1,9 @@
 <template>
   <section v-if="subProject" class="space-y-6">
-    <el-page-header @back="goBack">
+    <el-page-header class="rounded-lg border border-slate-200 bg-white p-4" @back="goBack">
       <template #content>
-        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div class="space-y-2">
             <h2 class="text-2xl font-semibold text-slate-900">{{ subProject.name }}</h2>
             <p class="text-sm text-slate-500">{{ subProject.description || "暂无描述" }}</p>
           </div>
