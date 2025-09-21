@@ -1,23 +1,9 @@
 import { defineStore } from "pinia";
 import { reactive } from "vue";
-import { sampleIdState } from "./sample-data";
-
-interface IdState {
-  project: number;
-  subProject: number;
-  content: number;
-  command: number;
-  contentType: number;
-}
 
 export const useAppStore = defineStore("app", () => {
-  const idState = reactive<IdState>({ ...sampleIdState });
+  // 使用 Set 记录当前正在执行的全局加载任务，便于在页面顶部展示统一的加载态
   const loadingStack = reactive(new Set<string>());
-
-  const nextId = (key: keyof IdState) => {
-    idState[key] += 1;
-    return idState[key];
-  };
 
   const startLoading = (key: string) => {
     loadingStack.add(key);
@@ -33,8 +19,6 @@ export const useAppStore = defineStore("app", () => {
   };
 
   return {
-    idState,
-    nextId,
     startLoading,
     stopLoading,
     isLoading,

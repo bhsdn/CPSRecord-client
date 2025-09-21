@@ -144,6 +144,7 @@ import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
 import ExpiryStatus from "@/components/content/ExpiryStatus.vue";
 import { useContents } from "@/composables/useContents";
 import { useSubProjects } from "@/composables/useSubProjects";
+import { useProjectsStore } from "@/stores/projects";
 import { useDateFormat } from "@/composables/useDateFormat";
 import type { ContentType } from "@/types";
 
@@ -154,7 +155,8 @@ type ExpirySummary = {
 };
 
 const { contentTypes, loading, fetchContentTypes, createContentType, updateContentType, deleteContentType } = useContents();
-const { subProjects, stats: subProjectStats } = useSubProjects();
+const { subProjects, stats: subProjectStats, fetchSubProjectsByProject } = useSubProjects();
+const projectsStore = useProjectsStore();
 const { formatDateOnly, getExpiryStatus, getExpiryText } = useDateFormat();
 
 const submitting = ref(false);
@@ -278,7 +280,14 @@ const handleDeleteType = async (id: number) => {
   }
 };
 
-onMounted(() => {
-  fetchContentTypes();
+// 页面初始化时同时获取内容类型与所有项目的子项目数据，保证统计面板准确
+onMounted(async () => {
+  await Promise.all([
+    fetchContentTypes(),
+    (async () => {
+      const projects = await projectsStore.fetchProjects();
+      await Promise.all(projects.map((project) => fetchSubProjectsByProject(project.id)));
+    })(),
+  ]);
 });
 </script>

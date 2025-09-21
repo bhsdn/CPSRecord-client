@@ -225,14 +225,13 @@ const contentDialogTitle = computed(() =>
   `${editingContent.value ? "编辑" : "新增"}内容`
 );
 
+// 页面初始化时同时拉取项目、子项目与内容类型数据
 const fetchDetail = async () => {
-  if (!project.value) {
-    await projectsStore.fetchProjects();
-  }
   subProjectLoading.value = true;
   try {
     await Promise.all([
-      subProjectsStore.ensureSubProjectsForProject(projectId),
+      projectsStore.fetchProjectById(projectId),
+      subProjectsStore.fetchSubProjectsByProject(projectId),
       contentsStore.fetchContentTypes(),
     ]);
   } finally {

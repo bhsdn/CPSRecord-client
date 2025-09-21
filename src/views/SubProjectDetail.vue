@@ -161,6 +161,7 @@ import {
   ChatLineSquare,
 } from "@element-plus/icons-vue";
 import { useDateFormat } from "@/composables/useDateFormat";
+import { useProjectsStore } from "@/stores/projects";
 import { useSubProjectsStore } from "@/stores/subProjects";
 import { useContentsStore } from "@/stores/contents";
 import SubProjectForm from "@/components/subproject/SubProjectForm.vue";
@@ -174,6 +175,7 @@ const route = useRoute();
 const router = useRouter();
 const { formatDate } = useDateFormat();
 
+const projectsStore = useProjectsStore();
 const subProjectsStore = useSubProjectsStore();
 const contentsStore = useContentsStore();
 const { contentTypes } = storeToRefs(contentsStore);
@@ -230,9 +232,11 @@ const deleteCommandDialogVisible = computed({
 
 const contentDialogTitle = computed(() => (editingContent.value ? "编辑内容" : "新增内容"));
 
+// 进入子项目详情时同时拉取子项目最新数据与内容类型
 const fetchDetail = async () => {
   await Promise.all([
-    subProjectsStore.ensureSubProjectsForProject(projectId),
+    projectsStore.fetchProjectById(projectId),
+    subProjectsStore.fetchSubProjectsByProject(projectId),
     contentsStore.fetchContentTypes(),
   ]);
 };

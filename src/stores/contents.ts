@@ -1,93 +1,93 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import type { ContentType } from "@/types";
-import { sampleContentTypes } from "./sample-data";
-import { useAppStore } from "./app";
-import { useSubProjectsStore } from "./subProjects";
+import type { ApiResponse } from "@/types/api";
+import { api, unwrap } from "@/utils/api";
 import { getExpiryStatus } from "@/utils/date";
+import { useSubProjectsStore } from "./subProjects";
+
+type RawContentType = ContentType & {
+  field_type?: ContentType["fieldType"];
+  has_expiry?: boolean;
+  is_system?: boolean;
+};
+
+// 将接口返回的内容类型格式化成前端可直接使用的结构
+const normalizeContentType = (raw: Partial<RawContentType>): ContentType => ({
+  id: Number(raw.id),
+  name: raw.name ?? "",
+  fieldType: (raw.fieldType ?? raw.field_type ?? "text") as ContentType["fieldType"],
+  hasExpiry: raw.hasExpiry ?? raw.has_expiry ?? false,
+  isSystem: raw.isSystem ?? raw.is_system ?? false,
+  description: raw.description ?? undefined,
+});
 
 export const useContentsStore = defineStore("contents", () => {
-  const contentTypes = ref<ContentType[]>([...sampleContentTypes]);
+  const contentTypes = ref<ContentType[]>([]);
   const loading = ref(false);
 
+  // 拉取内容类型配置，用于表单选择与校验
   const fetchContentTypes = async () => {
     loading.value = true;
     try {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      const response = await api.get<ApiResponse<ContentType[]>>("/content-types");
+      const payload = unwrap(response);
+      contentTypes.value = (payload.data ?? []).map((item) => normalizeContentType(item));
+      return contentTypes.value;
     } finally {
       loading.value = false;
     }
   };
 
+  // 新增内容类型后追加到列表中，方便即时管理
   const createContentType = async (
     payload: Pick<ContentType, "name" | "fieldType" | "hasExpiry" | "description">
   ) => {
-    const appStore = useAppStore();
-    const id = appStore.nextId("contentType");
-    const contentType: ContentType = {
-      id,
-      name: payload.name,
-      fieldType: payload.fieldType,
-      hasExpiry: payload.hasExpiry,
-      description: payload.description,
-      isSystem: false,
-    };
+    const response = await api.post<ApiResponse<ContentType>>("/content-types", payload);
+    const body = unwrap(response);
+    if (!body.data) throw new Error("创建内容类型失败");
+    const contentType = normalizeContentType(body.data);
     contentTypes.value.push(contentType);
     return contentType;
   };
 
+  // 更新内容类型时以服务端结果为准，避免字段差异
   const updateContentType = async (id: number, payload: Partial<ContentType>) => {
-    const contentType = contentTypes.value.find((item) => item.id === id);
-    if (!contentType) throw new Error("内容类型不存在");
-    Object.assign(contentType, payload);
-    return contentType;
+    const response = await api.put<ApiResponse<ContentType>>(`/content-types/${id}`, payload);
+    const body = unwrap(response);
+    if (!body.data) throw new Error("更新内容类型失败");
+    const updated = normalizeContentType(body.data);
+    const index = contentTypes.value.findIndex((item) => item.id === id);
+    if (index >= 0) {
+      contentTypes.value.splice(index, 1, updated);
+    } else {
+      contentTypes.value.push(updated);
+    }
+    return updated;
   };
 
+  // 删除内容类型后同步移除本地缓存
   const deleteContentType = async (id: number) => {
-    const contentType = contentTypes.value.find((item) => item.id === id);
-    if (!contentType) throw new Error("内容类型不存在");
-    if (contentType.isSystem) {
-      throw new Error("系统内容类型不可删除");
-    }
+    await api.delete<ApiResponse<null>>(`/content-types/${id}`);
     contentTypes.value = contentTypes.value.filter((item) => item.id !== id);
   };
 
+  // 内容相关操作直接委托给子项目仓库，保持数据一致性
   const addContent = async (
     subProjectId: number,
-    payload: {
-      contentTypeId: number;
-      contentValue: string;
-      expiryDays?: number;
-    }
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number }
   ) => {
     const subProjectsStore = useSubProjectsStore();
-    const contentType = contentTypes.value.find((item) => item.id === payload.contentTypeId);
-    if (!contentType) throw new Error("内容类型不存在");
-    return subProjectsStore.addContentToSubProject(subProjectId, {
-      contentType,
-      contentValue: payload.contentValue,
-      expiryDays: payload.expiryDays,
-    });
+    return subProjectsStore.addContentToSubProject(subProjectId, payload);
   };
 
   const updateContent = async (
     subProjectId: number,
     contentId: number,
-    payload: {
-      contentTypeId: number;
-      contentValue: string;
-      expiryDays?: number;
-    }
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number }
   ) => {
     const subProjectsStore = useSubProjectsStore();
-    const contentType = contentTypes.value.find((item) => item.id === payload.contentTypeId);
-    if (!contentType) throw new Error("内容类型不存在");
-    return subProjectsStore.addContentToSubProject(subProjectId, {
-      id: contentId,
-      contentType,
-      contentValue: payload.contentValue,
-      expiryDays: payload.expiryDays,
-    });
+    return subProjectsStore.updateContentInSubProject(subProjectId, contentId, payload);
   };
 
   const removeContent = async (subProjectId: number, contentId: number) => {
@@ -109,10 +109,7 @@ export const useContentsStore = defineStore("contents", () => {
     payload: { commandText: string; expiryDays: number }
   ) => {
     const subProjectsStore = useSubProjectsStore();
-    return subProjectsStore.upsertTextCommand(subProjectId, {
-      id: commandId,
-      ...payload,
-    });
+    return subProjectsStore.upsertTextCommand(subProjectId, { id: commandId, ...payload });
   };
 
   const removeTextCommand = async (subProjectId: number, commandId: number) => {
