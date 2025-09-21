@@ -1,0 +1,2119 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "AppController_getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "健康检查"
+        ]
+      }
+    },
+    "/projects": {
+      "get": {
+        "operationId": "ProjectsController_findAll",
+        "summary": "获取项目列表",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "搜索关键词",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取项目列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取项目列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目管理"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectsController_create",
+        "summary": "创建项目",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "创建项目成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目管理"
+        ]
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "operationId": "ProjectsController_findOne",
+        "summary": "获取项目详情",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取项目详情成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取项目详情成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目管理"
+        ]
+      },
+      "put": {
+        "operationId": "ProjectsController_update",
+        "summary": "更新项目",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "更新项目成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目管理"
+        ]
+      },
+      "delete": {
+        "operationId": "ProjectsController_remove",
+        "summary": "删除项目",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "删除项目成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目管理"
+        ]
+      }
+    },
+    "/projects/{id}/sub-projects": {
+      "get": {
+        "operationId": "ProjectsController_getSubProjects",
+        "summary": "获取项目的子项目列表",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取子项目列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取子项目列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目管理"
+        ]
+      }
+    },
+    "/sub-projects": {
+      "get": {
+        "operationId": "SubProjectsController_findAll",
+        "summary": "获取子项目列表",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": false,
+            "in": "query",
+            "description": "项目ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "搜索关键词",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取子项目列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取子项目列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "子项目管理"
+        ]
+      },
+      "post": {
+        "operationId": "SubProjectsController_create",
+        "summary": "创建子项目",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建子项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "创建子项目成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "子项目管理"
+        ]
+      }
+    },
+    "/sub-projects/{id}": {
+      "get": {
+        "operationId": "SubProjectsController_findOne",
+        "summary": "获取子项目详情",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取子项目详情成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取子项目详情成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "子项目管理"
+        ]
+      },
+      "put": {
+        "operationId": "SubProjectsController_update",
+        "summary": "更新子项目",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新子项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "更新子项目成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "子项目管理"
+        ]
+      },
+      "delete": {
+        "operationId": "SubProjectsController_remove",
+        "summary": "删除子项目",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除子项目成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "删除子项目成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "子项目管理"
+        ]
+      }
+    },
+    "/sub-projects/reorder": {
+      "post": {
+        "operationId": "SubProjectsController_reorder",
+        "summary": "更新子项目排序",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderSubProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "子项目排序更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "子项目排序更新成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "子项目管理"
+        ]
+      }
+    },
+    "/content-types": {
+      "get": {
+        "operationId": "ContentTypesController_findAll",
+        "summary": "获取内容类型列表",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "获取内容类型列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取内容类型列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容类型管理"
+        ]
+      },
+      "post": {
+        "operationId": "ContentTypesController_create",
+        "summary": "创建内容类型",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContentTypeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建内容类型成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "创建内容类型成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容类型管理"
+        ]
+      }
+    },
+    "/content-types/{id}": {
+      "put": {
+        "operationId": "ContentTypesController_update",
+        "summary": "更新内容类型",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContentTypeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新内容类型成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "更新内容类型成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容类型管理"
+        ]
+      },
+      "delete": {
+        "operationId": "ContentTypesController_remove",
+        "summary": "删除内容类型",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除内容类型成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "删除内容类型成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容类型管理"
+        ]
+      }
+    },
+    "/contents": {
+      "get": {
+        "operationId": "ContentsController_findAll",
+        "summary": "获取子项目内容列表",
+        "parameters": [
+          {
+            "name": "subProjectId",
+            "required": false,
+            "in": "query",
+            "description": "子项目ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "根据到期状态筛选内容",
+            "schema": {
+              "enum": [
+                "safe",
+                "warning",
+                "danger"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取内容列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取内容列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容管理"
+        ]
+      },
+      "post": {
+        "operationId": "ContentsController_create",
+        "summary": "创建子项目内容",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建内容成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "创建内容成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容管理"
+        ]
+      }
+    },
+    "/contents/{id}": {
+      "get": {
+        "operationId": "ContentsController_findOne",
+        "summary": "获取子项目内容详情",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取内容详情成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取内容详情成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容管理"
+        ]
+      },
+      "put": {
+        "operationId": "ContentsController_update",
+        "summary": "更新子项目内容",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新内容成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "更新内容成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容管理"
+        ]
+      },
+      "delete": {
+        "operationId": "ContentsController_remove",
+        "summary": "删除子项目内容",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除内容成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "删除内容成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "内容管理"
+        ]
+      }
+    },
+    "/text-commands": {
+      "get": {
+        "operationId": "TextCommandsController_findAll",
+        "summary": "获取文字口令列表",
+        "parameters": [
+          {
+            "name": "subProjectId",
+            "required": false,
+            "in": "query",
+            "description": "子项目ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "根据到期状态筛选口令",
+            "schema": {
+              "enum": [
+                "safe",
+                "warning",
+                "danger"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取文字口令列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取文字口令列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文字口令管理"
+        ]
+      },
+      "post": {
+        "operationId": "TextCommandsController_create",
+        "summary": "创建文字口令",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTextCommandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建文字口令成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "创建文字口令成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文字口令管理"
+        ]
+      }
+    },
+    "/text-commands/{id}": {
+      "get": {
+        "operationId": "TextCommandsController_findOne",
+        "summary": "获取文字口令详情",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取文字口令详情成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取文字口令详情成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文字口令管理"
+        ]
+      },
+      "put": {
+        "operationId": "TextCommandsController_update",
+        "summary": "更新文字口令",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTextCommandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新文字口令成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "更新文字口令成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文字口令管理"
+        ]
+      },
+      "delete": {
+        "operationId": "TextCommandsController_remove",
+        "summary": "删除文字口令",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除文字口令成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "删除文字口令成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文字口令管理"
+        ]
+      }
+    },
+    "/text-commands/bulk-delete": {
+      "post": {
+        "operationId": "TextCommandsController_bulkRemove",
+        "summary": "批量删除过期文字口令",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkDeleteTextCommandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "批量删除文字口令成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "批量删除文字口令成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文字口令管理"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "CPS Record API",
+    "description": "API documentation for CPS Record management system",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateProjectDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "项目名称",
+            "example": "淘宝CPS推广"
+          },
+          "description": {
+            "type": "string",
+            "description": "项目描述",
+            "example": "主要推广淘宝商品，包含服装、数码等分类"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateProjectDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "项目名称",
+            "example": "淘宝CPS推广"
+          },
+          "description": {
+            "type": "string",
+            "description": "项目描述",
+            "example": "主要推广淘宝商品，包含服装、数码等分类"
+          }
+        }
+      },
+      "CreateSubProjectDto": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "number",
+            "description": "所属项目ID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "子项目名称",
+            "example": "服装类目"
+          },
+          "description": {
+            "type": "string",
+            "description": "子项目描述"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "排序序号",
+            "example": 1
+          }
+        },
+        "required": [
+          "projectId",
+          "name"
+        ]
+      },
+      "UpdateSubProjectDto": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "number",
+            "description": "所属项目ID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "子项目名称",
+            "example": "服装类目"
+          },
+          "description": {
+            "type": "string",
+            "description": "子项目描述"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "排序序号",
+            "example": 1
+          }
+        }
+      },
+      "SubProjectOrderItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "子项目ID",
+            "example": 1
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "排序值",
+            "example": 1
+          }
+        },
+        "required": [
+          "id",
+          "sortOrder"
+        ]
+      },
+      "ReorderSubProjectDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "排序数据",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubProjectOrderItem"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CreateContentTypeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "类型名称",
+            "example": "图片链接"
+          },
+          "fieldType": {
+            "type": "string",
+            "description": "字段类型",
+            "example": "url"
+          },
+          "hasExpiry": {
+            "type": "boolean",
+            "description": "是否需要设置有效期",
+            "default": false
+          },
+          "isSystem": {
+            "type": "boolean",
+            "description": "是否系统内置类型",
+            "default": false
+          }
+        },
+        "required": [
+          "name",
+          "fieldType"
+        ]
+      },
+      "UpdateContentTypeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "类型名称",
+            "example": "图片链接"
+          },
+          "fieldType": {
+            "type": "string",
+            "description": "字段类型",
+            "example": "url"
+          },
+          "hasExpiry": {
+            "type": "boolean",
+            "description": "是否需要设置有效期",
+            "default": false
+          },
+          "isSystem": {
+            "type": "boolean",
+            "description": "是否系统内置类型",
+            "default": false
+          }
+        }
+      },
+      "CreateContentDto": {
+        "type": "object",
+        "properties": {
+          "subProjectId": {
+            "type": "number",
+            "description": "子项目ID",
+            "example": 1
+          },
+          "contentTypeId": {
+            "type": "number",
+            "description": "内容类型ID",
+            "example": 1
+          },
+          "contentValue": {
+            "type": "string",
+            "description": "内容值",
+            "example": "https://example.com/image.jpg"
+          },
+          "expiryDays": {
+            "type": "number",
+            "description": "有效天数",
+            "example": 30
+          }
+        },
+        "required": [
+          "subProjectId",
+          "contentTypeId",
+          "contentValue"
+        ]
+      },
+      "UpdateContentDto": {
+        "type": "object",
+        "properties": {
+          "subProjectId": {
+            "type": "number",
+            "description": "子项目ID",
+            "example": 1
+          },
+          "contentTypeId": {
+            "type": "number",
+            "description": "内容类型ID",
+            "example": 1
+          },
+          "contentValue": {
+            "type": "string",
+            "description": "内容值",
+            "example": "https://example.com/image.jpg"
+          },
+          "expiryDays": {
+            "type": "number",
+            "description": "有效天数",
+            "example": 30
+          }
+        }
+      },
+      "CreateTextCommandDto": {
+        "type": "object",
+        "properties": {
+          "subProjectId": {
+            "type": "number",
+            "description": "子项目ID",
+            "example": 1
+          },
+          "commandText": {
+            "type": "string",
+            "description": "文字口令内容",
+            "example": "复制这段代码打开淘宝即可"
+          },
+          "expiryDays": {
+            "type": "number",
+            "description": "有效天数",
+            "example": 7
+          }
+        },
+        "required": [
+          "subProjectId",
+          "commandText",
+          "expiryDays"
+        ]
+      },
+      "UpdateTextCommandDto": {
+        "type": "object",
+        "properties": {
+          "subProjectId": {
+            "type": "number",
+            "description": "子项目ID",
+            "example": 1
+          },
+          "commandText": {
+            "type": "string",
+            "description": "文字口令内容",
+            "example": "复制这段代码打开淘宝即可"
+          },
+          "expiryDays": {
+            "type": "number",
+            "description": "有效天数",
+            "example": 7
+          }
+        }
+      },
+      "BulkDeleteTextCommandDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "description": "待删除的文字口令ID列表",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      }
+    }
+  }
+}
