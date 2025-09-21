@@ -62,7 +62,9 @@ export const useProjectsStore = defineStore("projects", () => {
       const items = (payload.data ?? []).map((item) => normalizeProject(item));
       projects.value = items;
       return items;
-    } finally {
+    } catch(e){
+      throw new Error("获取项目列表失败")
+    }finally {
       loading.value = false;
     }
   };

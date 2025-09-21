@@ -146,6 +146,8 @@ const handleDelete = async () => {
 };
 
 onMounted(() => {
-  fetchProjects();
+  fetchProjects().catch(e=>{
+    ElMessage.error(e.message);
+  })
 });
 </script>
