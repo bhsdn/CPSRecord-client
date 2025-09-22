@@ -30,10 +30,21 @@ export const useContentsStore = defineStore("contents", () => {
   const fetchContentTypes = async () => {
     loading.value = true;
     try {
-      const response = await api.get<ApiResponse<ContentType[]>>("/content-types");
+      const response = await api.get<ApiResponse<ContentType[] | { items: ContentType[] }>>(
+        "/content-types"
+      );
       const payload = unwrap(response);
-      contentTypes.value = (payload.data ?? []).map((item) => normalizeContentType(item));
+      const dataSource = Array.isArray(payload.data)
+        ? payload.data
+        : (payload.data && typeof payload.data === "object" &&
+            Array.isArray((payload.data as { items?: ContentType[] }).items)
+            ? (payload.data as { items?: ContentType[] }).items
+            : []);
+      contentTypes.value = dataSource.map((item) => normalizeContentType(item));
       return contentTypes.value;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "获取内容类型失败";
+      throw new Error(message || "获取内容类型失败");
     } finally {
       loading.value = false;
     }
