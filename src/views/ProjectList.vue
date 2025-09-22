@@ -8,6 +8,10 @@
         </div>
         <div class="flex items-center gap-2 text-xs text-slate-500">
           <span class="flex items-center gap-1">
+            <el-icon><Collection /></el-icon>
+            项目总数：{{ pagination.total }}
+          </span>
+          <span class="flex items-center gap-1">
             <el-icon><TrendCharts /></el-icon>
             子项目总数：{{ projectStats.subProjectStats.total }}
           </span>
@@ -25,6 +29,17 @@
         </el-button>
       </ProjectSearch>
     </el-card>
+
+    <el-alert v-if="loadError" type="error" :closable="false" class="w-full" title="项目列表加载失败">
+      <template #description>
+        <div class="flex flex-col gap-2">
+          <span>{{ loadError }}，请稍后重试或点击重新加载。</span>
+          <div class="flex flex-wrap gap-2">
+            <el-button size="small" type="primary" @click="loadProjects">重新加载</el-button>
+          </div>
+        </div>
+      </template>
+    </el-alert>
 
     <LoadingSpinner v-if="loading" text="项目数据加载中..." />
 
@@ -67,7 +82,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { TrendCharts, Tickets, Plus } from "@element-plus/icons-vue";
+import { TrendCharts, Tickets, Plus, Collection } from "@element-plus/icons-vue";
 import ProjectCard from "@/components/project/ProjectCard.vue";
 import ProjectForm from "@/components/project/ProjectForm.vue";
 import ProjectSearch from "@/components/project/ProjectSearch.vue";
@@ -77,7 +92,8 @@ import { useProjects } from "@/composables/useProjects";
 import type { Project } from "@/types";
 
 const router = useRouter();
-const { filteredProjects, fetchProjects, createProject, updateProject, deleteProject, searchQuery, loading, projectStats } =
+// 通过组合式函数获取项目列表及操作方法
+const { filteredProjects, fetchProjects, createProject, updateProject, deleteProject, searchQuery, loading, projectStats, pagination } =
   useProjects();
 
 const dialogVisible = ref(false);
@@ -85,24 +101,29 @@ const deleteDialogVisible = ref(false);
 const editingProject = ref<Project | null>(null);
 const deletingProject = ref<Project | null>(null);
 const submitting = ref(false);
+const loadError = ref<string | null>(null);
 
 const dialogTitle = computed(() => (editingProject.value ? "编辑项目" : "新建项目"));
 
+// 打开新建弹窗
 const openCreateDialog = () => {
   editingProject.value = null;
   dialogVisible.value = true;
 };
 
+// 打开编辑弹窗
 const openEditDialog = (project: Project) => {
   editingProject.value = project;
   dialogVisible.value = true;
 };
 
+// 关闭弹窗并重置状态
 const closeDialog = () => {
   dialogVisible.value = false;
   editingProject.value = null;
 };
 
+// 处理创建或更新项目的提交逻辑
 const handleSubmit = async (payload: { name: string; description?: string | null }) => {
   submitting.value = true;
   try {
@@ -121,15 +142,18 @@ const handleSubmit = async (payload: { name: string; description?: string | null
   }
 };
 
+// 跳转至项目详情页
 const goProjectDetail = (id: number) => {
   router.push({ name: "ProjectDetail", params: { id } });
 };
 
+// 打开删除确认弹窗
 const confirmDelete = (project: Project) => {
   deletingProject.value = project;
   deleteDialogVisible.value = true;
 };
 
+// 删除项目并同步提示
 const handleDelete = async () => {
   if (!deletingProject.value) return;
   submitting.value = true;
@@ -145,9 +169,19 @@ const handleDelete = async () => {
   }
 };
 
+// 主动拉取项目列表，并在失败时展示错误提示
+const loadProjects = async () => {
+  loadError.value = null;
+  try {
+    await fetchProjects();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "获取项目列表失败";
+    loadError.value = message;
+    ElMessage.error(message);
+  }
+};
+
 onMounted(() => {
-  fetchProjects().catch(e=>{
-    ElMessage.error(e.message);
-  })
+  loadProjects();
 });
 </script>

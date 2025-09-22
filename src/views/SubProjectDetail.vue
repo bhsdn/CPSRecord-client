@@ -40,6 +40,24 @@
       </el-button>
     </el-card>
 
+    <el-alert
+      v-if="loadError"
+      type="error"
+      :closable="false"
+      show-icon
+      title="数据加载异常"
+      class="w-full"
+    >
+      <template #description>
+        <div class="flex flex-col gap-2">
+          <span>{{ loadError }}，请稍后重试。</span>
+          <div class="flex gap-2">
+            <el-button size="small" type="primary" @click="fetchDetail">重新加载</el-button>
+          </div>
+        </div>
+      </template>
+    </el-alert>
+
     <el-card shadow="never" body-class="space-y-3">
       <div class="flex items-center justify-between">
         <h3 class="text-base font-semibold text-slate-800">内容列表</h3>
@@ -185,6 +203,8 @@ const subProjectId = Number(route.params.id);
 const subProject = computed(() => subProjectsStore.getSubProjectById(subProjectId));
 
 const submitting = ref(false);
+// 记录接口错误信息，便于在界面展示统一提示
+const loadError = ref<string | null>(null);
 const editingContent = ref<SubProjectContent | null>(null);
 const deleteContentTarget = ref<SubProjectContent | null>(null);
 const editingCommand = ref<TextCommand | null>(null);
@@ -234,11 +254,18 @@ const contentDialogTitle = computed(() => (editingContent.value ? "编辑内容"
 
 // 进入子项目详情时同时拉取子项目最新数据与内容类型
 const fetchDetail = async () => {
-  await Promise.all([
-    projectsStore.fetchProjectById(projectId),
-    subProjectsStore.fetchSubProjectsByProject(projectId),
-    contentsStore.fetchContentTypes(),
-  ]);
+  loadError.value = null;
+  try {
+    await Promise.all([
+      projectsStore.fetchProjectById(projectId),
+      subProjectsStore.fetchSubProjectsByProject(projectId),
+      contentsStore.fetchContentTypes(),
+    ]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "加载子项目详情失败";
+    loadError.value = message;
+    ElMessage.error(message);
+  }
 };
 
 const goBack = () => {

@@ -6,7 +6,7 @@ import { useSubProjectsStore } from "@/stores/subProjects";
 export function useProjects() {
   const projectsStore = useProjectsStore();
   const subProjectsStore = useSubProjectsStore();
-  const { filteredProjects, loading, searchQuery, getProjectSummary } = storeToRefs(projectsStore);
+  const { filteredProjects, loading, searchQuery, getProjectSummary, pagination } = storeToRefs(projectsStore);
   const { subProjectStats } = storeToRefs(subProjectsStore);
 
   const projectStats = computed(() => ({
@@ -20,6 +20,7 @@ export function useProjects() {
     filteredProjects,
     loading,
     searchQuery,
+    pagination,
     projectStats,
   };
 }

@@ -40,6 +40,24 @@
       </el-button>
     </el-card>
 
+    <el-alert
+      v-if="loadError"
+      type="error"
+      :closable="false"
+      show-icon
+      title="数据加载异常"
+      class="w-full"
+    >
+      <template #description>
+        <div class="flex flex-col gap-2">
+          <span>{{ loadError }}，请稍后重试。</span>
+          <div class="flex gap-2">
+            <el-button size="small" type="primary" @click="fetchDetail">重新加载</el-button>
+          </div>
+        </div>
+      </template>
+    </el-alert>
+
     <SubProjectList
       :sub-projects="subProjects"
       :loading="subProjectLoading"
@@ -163,6 +181,8 @@ const commandTotal = computed(() =>
   subProjects.value.reduce((total, sub) => total + sub.textCommands.length, 0)
 );
 const subProjectLoading = ref(false);
+// 当接口请求失败时记录错误信息，便于在界面上提示
+const loadError = ref<string | null>(null);
 
 const dialogVisibleStates = reactive({
   subProject: false,
@@ -228,12 +248,17 @@ const contentDialogTitle = computed(() =>
 // 页面初始化时同时拉取项目、子项目与内容类型数据
 const fetchDetail = async () => {
   subProjectLoading.value = true;
+  loadError.value = null;
   try {
     await Promise.all([
       projectsStore.fetchProjectById(projectId),
       subProjectsStore.fetchSubProjectsByProject(projectId),
       contentsStore.fetchContentTypes(),
     ]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "加载项目详情失败";
+    loadError.value = message;
+    ElMessage.error(message);
   } finally {
     subProjectLoading.value = false;
   }
@@ -260,7 +285,7 @@ const handleSubProjectSubmit = async (payload: {
       await subProjectsStore.updateSubProject(editingSubProject.value.id, payload);
       ElMessage.success("子项目更新成功");
     } else {
-      await subProjectsStore.createSubProject(projectId, payload);
+      await subProjectsStore.createSubProject({ projectId, ...payload });
       ElMessage.success("子项目创建成功");
     }
     closeSubProjectDialog();
