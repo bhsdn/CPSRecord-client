@@ -6,6 +6,10 @@
           <div>
             <h2 class="text-2xl font-semibold text-slate-900">{{ project.name }}</h2>
             <p class="text-sm text-slate-500">{{ project.description || "暂无描述" }}</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <el-tag v-if="project.category?.name" size="small" type="success">{{ project.category.name }}</el-tag>
+              <el-tag v-else size="small" type="info">未分类</el-tag>
+            </div>
           </div>
           <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
             <span class="flex items-center gap-1">
@@ -19,6 +23,10 @@
             <span class="flex items-center gap-1">
               <el-icon><Tickets /></el-icon>
               文字口令 {{ commandTotal }}
+            </span>
+            <span class="flex items-center gap-1">
+              <el-icon><DocumentCopy /></el-icon>
+              文档 {{ project.documentationCount }}
             </span>
           </div>
         </div>
@@ -68,6 +76,7 @@
       @add-command="openCommandDialog"
       @edit-command="(sub, command) => openCommandDialog(sub, command)"
       @delete-command="confirmDeleteCommand"
+      @toggle-documentation="handleToggleDocumentation"
     />
   </section>
   <el-empty v-else description="项目不存在或已被删除">
@@ -146,14 +155,7 @@ import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import type { FormInstance, FormRules } from "element-plus";
-import {
-  Timer,
-  CollectionTag,
-  Tickets,
-  Plus,
-  Rank,
-  Setting,
-} from "@element-plus/icons-vue";
+import { Timer, CollectionTag, Tickets, Plus, Rank, Setting, DocumentCopy } from "@element-plus/icons-vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useProjectsStore } from "@/stores/projects";
 import { useSubProjectsStore } from "@/stores/subProjects";
@@ -278,6 +280,7 @@ const handleSubProjectSubmit = async (payload: {
   name: string;
   description?: string;
   sortOrder: number;
+  documentationEnabled: boolean;
 }) => {
   submitting.value = true;
   try {
@@ -293,6 +296,16 @@ const handleSubProjectSubmit = async (payload: {
     ElMessage.error("子项目操作失败");
   } finally {
     submitting.value = false;
+  }
+};
+
+const handleToggleDocumentation = async (subProject: SubProject, enabled: boolean) => {
+  try {
+    await subProjectsStore.updateSubProject(subProject.id, { documentationEnabled: enabled });
+    ElMessage.success(enabled ? "已开启文档生成" : "已关闭文档生成");
+  } catch (error) {
+    subProject.documentationEnabled = !enabled;
+    ElMessage.error("更新文档开关失败");
   }
 };
 

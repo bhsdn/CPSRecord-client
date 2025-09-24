@@ -16,6 +16,14 @@
     <el-form-item label="排序" prop="sortOrder">
       <el-input-number v-model="form.sortOrder" :min="1" :max="999" />
     </el-form-item>
+    <el-form-item label="生成文档" prop="documentationEnabled">
+      <el-switch
+        v-model="form.documentationEnabled"
+        inline-prompt
+        active-text="开启"
+        inactive-text="关闭"
+      />
+    </el-form-item>
     <div class="flex justify-end gap-3 pt-2">
       <el-button @click="handleCancel">取消</el-button>
       <el-button type="primary" :loading="submitting" @click="handleSubmit">
@@ -45,7 +53,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (
     e: "submit",
-    value: { name: string; description?: string; sortOrder: number }
+    value: { name: string; description?: string; sortOrder: number; documentationEnabled: boolean }
   ): void;
   (e: "cancel"): void;
 }>();
@@ -55,6 +63,7 @@ const form = reactive({
   name: "",
   description: "",
   sortOrder: 1,
+  documentationEnabled: false,
 });
 
 const rules: FormRules = {
@@ -73,10 +82,12 @@ watch(
       form.name = value.name ?? "";
       form.description = value.description ?? "";
       form.sortOrder = value.sortOrder ?? 1;
+      form.documentationEnabled = value.documentationEnabled ?? false;
     } else {
       form.name = "";
       form.description = "";
       form.sortOrder = 1;
+      form.documentationEnabled = false;
     }
   },
   { immediate: true }
@@ -90,6 +101,7 @@ const handleSubmit = async () => {
       name: form.name.trim(),
       description: form.description.trim(),
       sortOrder: form.sortOrder,
+      documentationEnabled: form.documentationEnabled,
     });
   });
 };

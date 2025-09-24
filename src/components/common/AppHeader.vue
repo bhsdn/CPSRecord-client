@@ -47,13 +47,7 @@
 import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useProjects } from "@/composables/useProjects";
-import {
-  Collection,
-  FolderOpened,
-  Timer,
-  List,
-  Files,
-} from "@element-plus/icons-vue";
+import { Collection, FolderOpened, Timer, List, Files, DocumentCopy } from "@element-plus/icons-vue";
 
 const route = useRoute();
 const { projectStats } = useProjects();
@@ -70,6 +64,12 @@ const navItems = computed(() => [
     path: "/content-types",
     match: "/content-types",
     icon: Files,
+  },
+  {
+    label: "文档中心",
+    path: "/documentation",
+    match: "/documentation",
+    icon: DocumentCopy,
   },
 ]);
 </script>

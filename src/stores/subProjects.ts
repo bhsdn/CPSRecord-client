@@ -34,6 +34,9 @@ type RawTextCommand = TextCommand & {
 type RawSubProject = SubProject & {
   project_id?: number;
   sort_order?: number;
+  enable_documentation?: boolean;
+  documentation_enabled?: boolean;
+  documentation_generated_at?: string | null;
   contents?: RawSubProjectContent[];
   text_commands?: RawTextCommand[];
   created_at?: string;
@@ -87,6 +90,9 @@ const normalizeSubProject = (raw: Partial<RawSubProject>): SubProject => ({
   name: raw.name ?? "",
   description: raw.description ?? "",
   sortOrder: raw.sortOrder ?? raw.sort_order ?? 0,
+  documentationEnabled:
+    raw.documentationEnabled ?? raw.enable_documentation ?? raw.documentation_enabled ?? false,
+  documentationGeneratedAt: raw.documentationGeneratedAt ?? raw.documentation_generated_at ?? null,
   contents: (raw.contents ?? []).map((item) => normalizeContent(item)),
   textCommands: (raw.textCommands ?? raw.text_commands ?? []).map((item) => normalizeCommand(item)),
   createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
@@ -154,9 +160,17 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
 
   // 创建子项目并同步更新项目统计
   const createSubProject = async (
-    payload: Pick<SubProject, "name" | "description" | "sortOrder"> & { projectId: number }
+    payload: Pick<SubProject, "name" | "description" | "sortOrder" | "documentationEnabled"> & {
+      projectId: number;
+    }
   ) => {
-    const response = await api.post<ApiResponse<RawSubProject>>("/sub-projects", payload);
+    const response = await api.post<ApiResponse<RawSubProject>>("/sub-projects", {
+      projectId: payload.projectId,
+      name: payload.name,
+      description: payload.description,
+      sortOrder: payload.sortOrder,
+      enableDocumentation: payload.documentationEnabled,
+    });
     const body = unwrap(response);
     if (!body.data) throw new Error("创建子项目失败");
     const subProject = normalizeSubProject(body.data);
@@ -166,8 +180,14 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   };
 
   // 编辑子项目信息并回写最新数据
-  const updateSubProject = async (id: number, payload: Partial<SubProject>) => {
-    const response = await api.put<ApiResponse<RawSubProject>>(`/sub-projects/${id}`, payload);
+  const updateSubProject = async (
+    id: number,
+    payload: Partial<SubProject> & { documentationEnabled?: boolean }
+  ) => {
+    const response = await api.put<ApiResponse<RawSubProject>>(`/sub-projects/${id}`, {
+      ...payload,
+      enableDocumentation: payload.documentationEnabled,
+    });
     const body = unwrap(response);
     if (!body.data) throw new Error("更新子项目失败");
     const subProject = normalizeSubProject(body.data);

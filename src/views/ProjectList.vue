@@ -19,10 +19,29 @@
             <el-icon><Tickets /></el-icon>
             文字口令：{{ projectStats.subProjectStats.commandTotal }}
           </span>
+          <span class="flex items-center gap-1">
+            <el-icon><DocumentCopy /></el-icon>
+            文档数：{{ projectStats.documentationTotal }}
+          </span>
         </div>
       </div>
 
       <ProjectSearch v-model="searchQuery">
+        <el-select
+          v-model="selectedCategoryId"
+          placeholder="全部分类"
+          clearable
+          class="w-36"
+          @clear="handleCategoryReset"
+        >
+          <el-option :value="null" label="全部分类" />
+          <el-option
+            v-for="category in activeCategories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
         <el-button type="primary" @click="openCreateDialog">
           <el-icon class="mr-1"><Plus /></el-icon>
           新建项目
@@ -62,6 +81,7 @@
       :model-value="editingProject"
       :submit-text="editingProject ? '保存修改' : '创建项目'"
       :submitting="submitting"
+      :categories="activeCategories"
       @submit="handleSubmit"
       @cancel="closeDialog"
     />
@@ -80,21 +100,34 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { TrendCharts, Tickets, Plus, Collection } from "@element-plus/icons-vue";
+import { TrendCharts, Tickets, Plus, Collection, DocumentCopy } from "@element-plus/icons-vue";
 import ProjectCard from "@/components/project/ProjectCard.vue";
 import ProjectForm from "@/components/project/ProjectForm.vue";
 import ProjectSearch from "@/components/project/ProjectSearch.vue";
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import { useProjects } from "@/composables/useProjects";
+import { useProjectCategoriesStore } from "@/stores/projectCategories";
 import type { Project } from "@/types";
 
 const router = useRouter();
 // 通过组合式函数获取项目列表及操作方法
-const { filteredProjects, fetchProjects, createProject, updateProject, deleteProject, searchQuery, loading, projectStats, pagination } =
-  useProjects();
+const {
+  filteredProjects,
+  fetchProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+  searchQuery,
+  loading,
+  projectStats,
+  pagination,
+  activeCategoryId,
+  setActiveCategoryId,
+} = useProjects();
 
 const dialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
@@ -102,6 +135,14 @@ const editingProject = ref<Project | null>(null);
 const deletingProject = ref<Project | null>(null);
 const submitting = ref(false);
 const loadError = ref<string | null>(null);
+
+const projectCategoriesStore = useProjectCategoriesStore();
+const { activeCategories } = storeToRefs(projectCategoriesStore);
+
+const selectedCategoryId = computed({
+  get: () => activeCategoryId.value,
+  set: (value: number | null | undefined) => setActiveCategoryId(value ?? null),
+});
 
 const dialogTitle = computed(() => (editingProject.value ? "编辑项目" : "新建项目"));
 
@@ -124,7 +165,7 @@ const closeDialog = () => {
 };
 
 // 处理创建或更新项目的提交逻辑
-const handleSubmit = async (payload: { name: string; description?: string | null }) => {
+const handleSubmit = async (payload: { name: string; description?: string | null; categoryId: number }) => {
   submitting.value = true;
   try {
     if (editingProject.value) {
@@ -181,7 +222,21 @@ const loadProjects = async () => {
   }
 };
 
+const loadCategories = async () => {
+  try {
+    await projectCategoriesStore.fetchCategories();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "获取项目分类失败";
+    ElMessage.warning(message);
+  }
+};
+
+const handleCategoryReset = () => {
+  setActiveCategoryId(null);
+};
+
 onMounted(() => {
+  loadCategories();
   loadProjects();
 });
 </script>
