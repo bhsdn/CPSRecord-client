@@ -246,8 +246,7 @@ const handleRegenerate = async () => {
   regenerating.value = true;
   try {
     await regenerateDocumentation();
-    ElMessage.success("已提交文档生成任务");
-    await loadDocumentation();
+    ElMessage.success("文档数据已刷新");
   } catch (error) {
     const message = error instanceof Error ? error.message : "生成文档失败";
     ElMessage.error(message);
