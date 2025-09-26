@@ -19,6 +19,24 @@ type RawDocumentationEntry = DocumentationEntry & {
   category_name?: string;
   generated_at?: string;
   snapshot_json?: string | Record<string, unknown>;
+  snapshotJson?: string | Record<string, unknown>;
+  snapshotData?: string | Record<string, unknown>;
+  project?: {
+    id?: number | string;
+    name?: string;
+    category?: {
+      id?: number | string | null;
+      name?: string;
+    } | null;
+  } | null;
+  subProject?: {
+    id?: number | string;
+    name?: string;
+  } | null;
+  category?: {
+    id?: number | string | null;
+    name?: string;
+  } | null;
 };
 
 interface DocumentationListApiData {
@@ -29,18 +47,51 @@ interface DocumentationListApiData {
   syncedAt?: string | null;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+};
+
 const normalizeEntry = (raw: Partial<RawDocumentationEntry>): DocumentationEntry => {
-  const resolvedCategoryId = raw.categoryId ?? raw.category_id;
+  const project = isRecord(raw.project) ? raw.project : null;
+  const subProject = isRecord(raw.subProject) ? raw.subProject : null;
+  const category = isRecord(raw.category) ? raw.category : project?.category ?? null;
+
+  const resolvedCategoryId =
+    raw.categoryId ??
+    raw.category_id ??
+    (category && category.id !== undefined ? category.id : null);
   const categoryId =
-    resolvedCategoryId === null || resolvedCategoryId === undefined
+    resolvedCategoryId === null || resolvedCategoryId === undefined || resolvedCategoryId === ""
       ? null
       : Number(resolvedCategoryId);
-  const categoryName = raw.categoryName ?? raw.category_name ?? "未分类";
+  const categoryName =
+    raw.categoryName ??
+    raw.category_name ??
+    (isRecord(category) && typeof category.name === "string" ? category.name : undefined) ??
+    "未分类";
 
-  const rawSnapshot =
-    raw.snapshot ?? raw.snapshot_json ?? (raw as { snapshotJson?: unknown }).snapshotJson;
+  const resolvedProjectId = raw.projectId ?? raw.project_id ?? project?.id;
+  const projectId = Number(resolvedProjectId ?? 0);
+  const projectName =
+    raw.projectName ??
+    raw.project_name ??
+    (typeof project?.name === "string" ? project.name : "");
+
+  const resolvedSubProjectId = raw.subProjectId ?? raw.sub_project_id ?? subProject?.id;
+  const subProjectId = Number(resolvedSubProjectId ?? 0);
+  const subProjectName =
+    raw.subProjectName ??
+    raw.sub_project_name ??
+    (typeof subProject?.name === "string" ? subProject.name : "");
+
+  let rawSnapshot: unknown =
+    raw.snapshot ??
+    raw.snapshot_json ??
+    raw.snapshotJson ??
+    raw.snapshotData;
+
   let snapshot: Record<string, unknown> = {};
-  if (rawSnapshot && typeof rawSnapshot === "object") {
+  if (isRecord(rawSnapshot)) {
     snapshot = rawSnapshot as Record<string, unknown>;
   } else if (typeof rawSnapshot === "string" && rawSnapshot.trim()) {
     try {
@@ -50,16 +101,19 @@ const normalizeEntry = (raw: Partial<RawDocumentationEntry>): DocumentationEntry
     }
   }
 
+  const generatedAt =
+    raw.generatedAt ?? raw.generated_at ?? (subProject as { lastDocumentationAt?: string })?.lastDocumentationAt;
+
   return {
     id: Number(raw.id ?? 0),
-    subProjectId: Number(raw.subProjectId ?? raw.sub_project_id ?? 0),
-    subProjectName: raw.subProjectName ?? raw.sub_project_name ?? "",
-    projectId: Number(raw.projectId ?? raw.project_id ?? 0),
-    projectName: raw.projectName ?? raw.project_name ?? "",
+    subProjectId,
+    subProjectName,
+    projectId,
+    projectName,
     categoryId,
     categoryName,
     snapshot,
-    generatedAt: raw.generatedAt ?? raw.generated_at ?? new Date().toISOString(),
+    generatedAt: generatedAt ?? new Date().toISOString(),
   };
 };
 
