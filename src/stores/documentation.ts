@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { DocumentationEntry, SubProject } from "@/types";
-import { useProjectsStore } from "@/stores/projects";
-import { useSubProjectsStore } from "@/stores/subProjects";
+import type { DocumentationEntry } from "@/types";
+import type { ApiResponse } from "@/types/api";
+import { api, unwrap } from "@/utils/api";
 
 interface DocumentationFilters {
   categoryId?: number | null;
@@ -10,82 +10,89 @@ interface DocumentationFilters {
   keyword?: string;
 }
 
-const buildSnapshot = (subProject: SubProject): Record<string, unknown> => {
-  const snapshot: Record<string, unknown> = {};
-  subProject.contents.forEach((content) => {
-    const label = content.contentType?.name || `内容 #${content.id}`;
-    snapshot[label] = content.contentValue;
-    if (content.expiryDate) {
-      snapshot[`${label}（到期）`] = content.expiryDate;
-    }
-  });
-  if (subProject.textCommands.length) {
-    snapshot["文字口令"] = subProject.textCommands
-      .map((command) =>
-        command.expiryDate
-          ? `${command.commandText}（有效至 ${command.expiryDate}）`
-          : command.commandText
-      )
-      .join(" / ");
-  }
-  if (subProject.description) {
-    snapshot["子项目描述"] = subProject.description;
-  }
-  return snapshot;
+type RawDocumentationEntry = DocumentationEntry & {
+  sub_project_id?: number;
+  sub_project_name?: string;
+  project_id?: number;
+  project_name?: string;
+  category_id?: number | null;
+  category_name?: string;
+  generated_at?: string;
+  snapshot_json?: string | Record<string, unknown>;
 };
 
-const matchKeyword = (
-  subProject: SubProject,
-  snapshot: Record<string, unknown>,
-  keyword?: string
-) => {
-  const normalized = keyword?.trim().toLowerCase();
-  if (!normalized) return true;
-  const fields: string[] = [
-    subProject.name,
-    subProject.description ?? "",
-    ...subProject.contents.map((item) => item.contentValue || ""),
-    ...subProject.textCommands.map((item) => item.commandText || ""),
-    ...Object.entries(snapshot).map(([key, value]) => `${key} ${String(value ?? "")}`),
-  ];
-  return fields.some((field) => field.toLowerCase().includes(normalized));
+interface DocumentationListApiData {
+  entries?: RawDocumentationEntry[] | { items?: RawDocumentationEntry[] };
+  generatedAt?: string | null;
+  lastGeneratedAt?: string | null;
+  lastSyncedAt?: string | null;
+  syncedAt?: string | null;
+}
+
+const normalizeEntry = (raw: Partial<RawDocumentationEntry>): DocumentationEntry => {
+  const resolvedCategoryId = raw.categoryId ?? raw.category_id;
+  const categoryId =
+    resolvedCategoryId === null || resolvedCategoryId === undefined
+      ? null
+      : Number(resolvedCategoryId);
+  const categoryName = raw.categoryName ?? raw.category_name ?? "未分类";
+
+  const rawSnapshot =
+    raw.snapshot ?? raw.snapshot_json ?? (raw as { snapshotJson?: unknown }).snapshotJson;
+  let snapshot: Record<string, unknown> = {};
+  if (rawSnapshot && typeof rawSnapshot === "object") {
+    snapshot = rawSnapshot as Record<string, unknown>;
+  } else if (typeof rawSnapshot === "string" && rawSnapshot.trim()) {
+    try {
+      snapshot = JSON.parse(rawSnapshot);
+    } catch (error) {
+      snapshot = { 内容: rawSnapshot };
+    }
+  }
+
+  return {
+    id: Number(raw.id ?? 0),
+    subProjectId: Number(raw.subProjectId ?? raw.sub_project_id ?? 0),
+    subProjectName: raw.subProjectName ?? raw.sub_project_name ?? "",
+    projectId: Number(raw.projectId ?? raw.project_id ?? 0),
+    projectName: raw.projectName ?? raw.project_name ?? "",
+    categoryId,
+    categoryName,
+    snapshot,
+    generatedAt: raw.generatedAt ?? raw.generated_at ?? new Date().toISOString(),
+  };
+};
+
+const extractEntries = (data?: DocumentationListApiData): RawDocumentationEntry[] => {
+  if (!data) return [];
+  if (Array.isArray(data.entries)) return data.entries;
+  if (data.entries && typeof data.entries === "object") {
+    const maybeItems = (data.entries as { items?: RawDocumentationEntry[] }).items;
+    if (Array.isArray(maybeItems)) return maybeItems;
+  }
+  if (Array.isArray((data as unknown as { items?: RawDocumentationEntry[] }).items)) {
+    return (data as unknown as { items?: RawDocumentationEntry[] }).items ?? [];
+  }
+  return [];
+};
+
+const resolveGeneratedAt = (data?: DocumentationListApiData, entries: DocumentationEntry[] = []) => {
+  return (
+    data?.generatedAt ??
+    data?.lastGeneratedAt ??
+    data?.lastSyncedAt ??
+    data?.syncedAt ??
+    entries[0]?.generatedAt ??
+    null
+  );
 };
 
 export const useDocumentationStore = defineStore("documentation", () => {
-  const projectsStore = useProjectsStore();
-  const subProjectsStore = useSubProjectsStore();
-
   const entries = ref<DocumentationEntry[]>([]);
   const loading = ref(false);
   const lastSyncedAt = ref<string | null>(null);
   const error = ref<string | null>(null);
   const lastFilters = ref<DocumentationFilters | null>(null);
-
-  const ensureProjectsLoaded = async () => {
-    if (!projectsStore.projects.length) {
-      await projectsStore.fetchProjects({ limit: 200 });
-    }
-  };
-
-  const resolveProjects = async (filters: DocumentationFilters) => {
-    await ensureProjectsLoaded();
-    const { categoryId = null, projectId = null } = filters;
-    let candidates = projectsStore.projects.filter((project) => project.isActive);
-    if (categoryId !== null) {
-      candidates = candidates.filter((project) => project.categoryId === categoryId);
-    }
-    if (projectId !== null) {
-      let target = candidates.find((project) => project.id === projectId);
-      if (!target) {
-        const fetched = await projectsStore.fetchProjectById(projectId);
-        if (fetched && fetched.isActive) {
-          target = fetched;
-        }
-      }
-      candidates = target && target.isActive ? [target] : [];
-    }
-    return candidates;
-  };
 
   const fetchDocumentation = async (filters?: DocumentationFilters) => {
     const normalizedFilters: DocumentationFilters = {
@@ -98,53 +105,30 @@ export const useDocumentationStore = defineStore("documentation", () => {
     lastFilters.value = normalizedFilters;
 
     try {
-      const projects = await resolveProjects(normalizedFilters);
-      if (!projects.length) {
-        entries.value = [];
-        lastSyncedAt.value = new Date().toISOString();
-        return;
+      const params: Record<string, number | string> = {};
+      if (normalizedFilters.categoryId !== null) {
+        params.categoryId = normalizedFilters.categoryId;
+      }
+      if (normalizedFilters.projectId !== null) {
+        params.projectId = normalizedFilters.projectId;
+      }
+      if (normalizedFilters.keyword) {
+        params.keyword = normalizedFilters.keyword;
       }
 
-      const results = await Promise.all(
-        projects.map(async (project) => {
-          const subProjects = await subProjectsStore.fetchSubProjectsByProject(project.id);
-          return { projectId: project.id, subProjects };
-        })
-      );
-
-      const documentationEntries: DocumentationEntry[] = [];
-
-      results.forEach(({ projectId, subProjects }) => {
-        const project = projectsStore.getProjectById(projectId);
-        if (!project) return;
-        subProjects
-          .filter((subProject) => subProject.isActive && subProject.documentationEnabled)
-          .forEach((subProject) => {
-            const snapshot = buildSnapshot(subProject);
-            if (!matchKeyword(subProject, snapshot, normalizedFilters.keyword)) {
-              return;
-            }
-            documentationEntries.push({
-              id: subProject.id,
-              subProjectId: subProject.id,
-              subProjectName: subProject.name,
-              projectId: project.id,
-              projectName: project.name,
-              categoryId: project.categoryId,
-              categoryName: project.category?.name ?? "未分类",
-              snapshot,
-              generatedAt:
-                subProject.documentationGeneratedAt ?? subProject.updatedAt ?? new Date().toISOString(),
-            });
-          });
+      const response = await api.get<ApiResponse<DocumentationListApiData>>("/documentation", {
+        params,
       });
-
-      documentationEntries.sort((a, b) => {
-        return new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime();
-      });
+      const payload = unwrap(response);
+      const rawEntries = extractEntries(payload.data);
+      const documentationEntries = rawEntries
+        .map((item) => normalizeEntry(item))
+        .sort(
+          (a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
+        );
 
       entries.value = documentationEntries;
-      lastSyncedAt.value = new Date().toISOString();
+      lastSyncedAt.value = resolveGeneratedAt(payload.data, documentationEntries);
     } catch (err) {
       error.value = err instanceof Error ? err.message : "获取文档数据失败";
       throw err;
@@ -154,7 +138,9 @@ export const useDocumentationStore = defineStore("documentation", () => {
   };
 
   const regenerateDocumentation = async (subProjectIds?: number[]) => {
-    void subProjectIds;
+    await api.post<ApiResponse<unknown>>("/documentation/generate", {
+      subProjectIds: subProjectIds?.length ? subProjectIds : undefined,
+    });
     await fetchDocumentation(lastFilters.value ?? undefined);
   };
 
