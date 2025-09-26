@@ -39,6 +39,14 @@ const routes: RouteRecordRaw[] = [
       title: "内容类型管理",
     },
   },
+  {
+    path: "/documentation",
+    name: "DocumentationCenter",
+    component: () => import("@/views/DocumentationCenter.vue"),
+    meta: {
+      title: "文档中心",
+    },
+  },
 ];
 
 const router = createRouter({

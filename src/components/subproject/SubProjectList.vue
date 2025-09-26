@@ -33,6 +33,15 @@
                   <el-icon><Tickets /></el-icon>
                   口令 {{ subProject.textCommands.length }}
                 </span>
+                <el-tag :type="subProject.documentationEnabled ? 'success' : 'info'" size="small">
+                  文档{{ subProject.documentationEnabled ? "已开启" : "未开启" }}
+                </el-tag>
+                <el-switch
+                  :model-value="subProject.documentationEnabled"
+                  size="small"
+                  @click.stop
+                  @change="(value: boolean) => emit('toggle-documentation', subProject, value)"
+                />
               </div>
             </div>
           </template>
@@ -136,6 +145,7 @@ const emit = defineEmits<{
   (e: "add-command", subProject: SubProject): void;
   (e: "edit-command", subProject: SubProject, command: TextCommand): void;
   (e: "delete-command", subProject: SubProject, command: TextCommand): void;
+  (e: "toggle-documentation", subProject: SubProject, enabled: boolean): void;
 }>();
 
 const handleCommandAction = (
