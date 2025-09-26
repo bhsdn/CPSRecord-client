@@ -169,7 +169,7 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
       name: payload.name,
       description: payload.description,
       sortOrder: payload.sortOrder,
-      enableDocumentation: payload.documentationEnabled,
+      documentationEnabled: payload.documentationEnabled,
     });
     const body = unwrap(response);
     if (!body.data) throw new Error("创建子项目失败");
@@ -184,9 +184,10 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
     id: number,
     payload: Partial<SubProject> & { documentationEnabled?: boolean }
   ) => {
+    const { documentationEnabled, ...rest } = payload;
     const response = await api.put<ApiResponse<RawSubProject>>(`/sub-projects/${id}`, {
-      ...payload,
-      enableDocumentation: payload.documentationEnabled,
+      ...rest,
+      ...(documentationEnabled !== undefined ? { documentationEnabled } : {}),
     });
     const body = unwrap(response);
     if (!body.data) throw new Error("更新子项目失败");

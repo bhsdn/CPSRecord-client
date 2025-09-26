@@ -259,7 +259,7 @@ onMounted(async () => {
   try {
     await Promise.allSettled([
       projectCategoriesStore.fetchCategories(),
-      projectsStore.fetchProjects({ limit: 200 }),
+      projectsStore.fetchProjects({ limit: 100 }),
     ]);
   } catch (error) {
     // 忽略单独的异常，错误会在各自的方法中提示
