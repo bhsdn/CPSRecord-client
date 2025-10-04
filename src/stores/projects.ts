@@ -1,111 +1,26 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { Project, ProjectCategory } from "@/types";
-import type { ApiResponse } from "@/types/api";
-import { api, unwrap } from "@/utils/api";
+import { ElMessage } from "element-plus";
+import type { Project, CreateProjectDto, UpdateProjectDto, QueryProjectParams } from "@/types";
+import { projectService } from "@/services/api.service";
 import { formatDate } from "@/utils/date";
+import { isApiError, isCancelError } from "@/utils/api";
 
-// 定义接口返回的原始字段，兼容后端的下划线命名
-type RawProjectCategory = ProjectCategory & {
-  sort_order?: number;
-  is_active?: boolean;
-  project_count?: number;
-};
-
-type RawProject = Project & {
-  sub_project_count?: number;
-  documentation_count?: number;
-  category_id?: number | null;
-  category_name?: string;
-  category?: RawProjectCategory;
-  created_at?: string;
-  updated_at?: string;
-  is_active?: boolean;
-};
-
-// 项目列表接口返回的分页结构
-interface ProjectListApiData {
-  items?: RawProject[];
-  total?: number;
-  page?: number;
-  limit?: number;
-  totalPages?: number;
-}
-
-const normalizeCategory = (raw?: Partial<RawProjectCategory>): ProjectCategory | undefined => {
-  if (!raw) return undefined;
-  return {
-    id: Number(raw.id ?? 0),
-    name: raw.name ?? "",
-    description: raw.description ?? "",
-    sortOrder: raw.sortOrder ?? raw.sort_order ?? 0,
-    isActive: raw.isActive ?? raw.is_active ?? true,
-    projectCount: raw.projectCount ?? raw.project_count,
-  };
-};
-
-const normalizeProject = (raw: Partial<RawProject>): Project => ({
-  id: Number(raw.id),
-  name: raw.name ?? "",
-  description: raw.description ?? "",
-  categoryId: raw.categoryId ?? raw.category_id ?? raw.category?.id ?? null,
-  category: normalizeCategory(raw.category) ??
-    (raw.category_name
-      ? {
-          id: raw.category_id ?? 0,
-          name: raw.category_name,
-          description: "",
-          sortOrder: 0,
-          isActive: true,
-        }
-      : undefined),
-  subProjectCount: raw.subProjectCount ?? raw.sub_project_count ?? 0,
-  documentationCount: raw.documentationCount ?? raw.documentation_count ?? 0,
-  createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
-  updatedAt: raw.updatedAt ?? raw.updated_at ?? new Date().toISOString(),
-  isActive: raw.isActive ?? raw.is_active ?? true,
-});
-
+/**
+ * 项目Store
+ * 管理项目列表、CRUD操作和本地缓存
+ */
 export const useProjectsStore = defineStore("projects", () => {
   const projects = ref<Project[]>([]);
   const loading = ref(false);
   const searchQuery = ref("");
   const activeCategoryId = ref<number | null>(null);
-  // 用于记录分页及总数信息，支撑仪表盘展示
+  // 分页信息
   const pagination = ref({ total: 0, page: 1, limit: 20, totalPages: 0 });
 
-  // 辅助方法：从接口返回的 data 中解析项目数组
-  const extractProjectList = (data?: unknown): RawProject[] => {
-    if (!data) {
-      pagination.value = { total: 0, page: 1, limit: 20, totalPages: 0 };
-      return [];
-    }
-    if (Array.isArray(data)) {
-      pagination.value = {
-        total: data.length,
-        page: 1,
-        limit: data.length || 20,
-        totalPages: data.length ? 1 : 0,
-      };
-      return data as RawProject[];
-    }
-    if (typeof data === "object") {
-      const record = data as ProjectListApiData;
-      if (Array.isArray(record.items)) {
-        pagination.value = {
-          total: record.total ?? record.items.length,
-          page: record.page ?? 1,
-          limit: record.limit ?? record.items.length,
-          totalPages: record.totalPages ?? 1,
-        };
-        return record.items;
-      }
-    }
-    pagination.value = { total: 0, page: 1, limit: 20, totalPages: 0 };
-    return [];
-  };
-
-  // 工具方法：将后端返回的项目数据写入响应式数组，避免重复项
+  /**
+   * 工具方法：更新或添加项目
+   */
   const setProject = (project: Project) => {
     const index = projects.value.findIndex((item) => item.id === project.id);
     if (index >= 0) {
@@ -115,7 +30,9 @@ export const useProjectsStore = defineStore("projects", () => {
     }
   };
 
-  // 根据搜索关键字筛选项目，仅展示仍处于激活状态的数据
+  /**
+   * 过滤后的项目列表（根据搜索和分类）
+   */
   const filteredProjects = computed(() => {
     const query = searchQuery.value.trim().toLowerCase();
     const categoryId = activeCategoryId.value;
@@ -130,80 +47,123 @@ export const useProjectsStore = defineStore("projects", () => {
     });
   });
 
+  /**
+   * 根据ID获取项目
+   */
   const getProjectById = (id: number) =>
     projects.value.find((project) => project.id === id && project.isActive);
 
-  // 从后端获取全部项目列表，并刷新本地缓存
-  const fetchProjects = async (params?: { page?: number; limit?: number }) => {
+  /**
+   * 获取项目列表
+   */
+  const fetchProjects = async (params?: QueryProjectParams) => {
     loading.value = true;
     try {
-      const response = await api.get<ApiResponse<ProjectListApiData>>("/projects", {
-        params,
-      });
-      const payload = unwrap(response);
-      const items = extractProjectList(payload.data).map((item) => normalizeProject(item));
-      projects.value = items;
-      return items;
+      const result = await projectService.getList(params);
+      projects.value = result.data || [];
+      pagination.value = result.pagination;
+      return result.data;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "获取项目列表失败";
-      throw new Error(message || "获取项目列表失败");
+      if (isCancelError(error)) {
+        console.log("项目列表请求被取消");
+        return [];
+      }
+      
+      const message = isApiError(error) 
+        ? error.response?.data?.message || "获取项目列表失败"
+        : "获取项目列表失败";
+      
+      ElMessage.error(message);
+      projects.value = [];
+      throw error;
     } finally {
       loading.value = false;
     }
   };
 
-  // 按 ID 单独拉取项目详情，用于页面刷新或统计同步
+  /**
+   * 按ID获取项目详情
+   */
   const fetchProjectById = async (id: number) => {
-    const response = await api.get<ApiResponse<RawProject>>(`/projects/${id}`);
-    const payload = unwrap(response);
-    if (!payload.data) return null;
-    const project = normalizeProject(payload.data);
-    setProject(project);
-    return project;
-  };
-
-  // 创建项目后直接插入到列表顶部，便于用户立即看到结果
-  const createProject = async (
-    projectData: { name: string; description?: string | null; categoryId: number }
-  ) => {
-    const response = await api.post<ApiResponse<RawProject>>("/projects", projectData);
-    const payload = unwrap(response);
-    if (!payload.data) throw new Error("创建项目失败");
-    const project = normalizeProject(payload.data);
-    projects.value.unshift(project);
-    pagination.value.total += 1;
-    return project;
-  };
-
-  // 更新项目时以服务端返回的数据为准，同时保留本地回退逻辑
-  const updateProject = async (
-    id: number,
-    payload: Partial<Project> & { categoryId?: number | null }
-  ) => {
-    const response = await api.put<ApiResponse<RawProject>>(`/projects/${id}`, payload);
-    const body = unwrap(response);
-    if (body.data) {
-      const project = normalizeProject(body.data);
+    try {
+      const project = await projectService.getDetail(id);
       setProject(project);
       return project;
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.response?.data?.message || "获取项目详情失败"
+        : "获取项目详情失败";
+      
+      ElMessage.error(message);
+      throw error;
     }
-    const target = projects.value.find((item) => item.id === id);
-    if (!target) throw new Error("项目不存在");
-    Object.assign(target, payload);
-    return target;
   };
 
-  // 软删除项目，后端成功后仅更新 isActive 状态
+  /**
+   * 创建项目
+   */
+  const createProject = async (data: CreateProjectDto) => {
+    try {
+      const project = await projectService.create(data);
+      projects.value.unshift(project);
+      pagination.value.total += 1;
+      ElMessage.success("项目创建成功");
+      return project;
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.response?.data?.message || "创建项目失败"
+        : "创建项目失败";
+      
+      ElMessage.error(message);
+      throw error;
+    }
+  };
+
+  /**
+   * 更新项目
+   */
+  const updateProject = async (id: number, data: UpdateProjectDto) => {
+    try {
+      const project = await projectService.update(id, data);
+      setProject(project);
+      ElMessage.success("项目更新成功");
+      return project;
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.response?.data?.message || "更新项目失败"
+        : "更新项目失败";
+      
+      ElMessage.error(message);
+      throw error;
+    }
+  };
+
+  /**
+   * 删除项目
+   */
   const deleteProject = async (id: number) => {
-    await api.delete<ApiResponse<null>>(`/projects/${id}`);
-    const target = projects.value.find((project) => project.id === id);
-    if (!target) return null;
-    target.isActive = false;
-    pagination.value.total = Math.max(pagination.value.total - 1, 0);
-    return target;
+    try {
+      await projectService.delete(id);
+      const target = projects.value.find((project) => project.id === id);
+      if (target) {
+        target.isActive = false;
+        pagination.value.total = Math.max(pagination.value.total - 1, 0);
+      }
+      ElMessage.success("项目删除成功");
+      return target;
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.response?.data?.message || "删除项目失败"
+        : "删除项目失败";
+      
+      ElMessage.error(message);
+      throw error;
+    }
   };
 
-  // 汇总项目数量及最近更新时间，供仪表盘展示
+  /**
+   * 项目汇总信息
+   */
   const getProjectSummary = computed(() => {
     const activeProjects = projects.value.filter((item) => item.isActive);
     const documentationTotal = activeProjects.reduce(
@@ -220,24 +180,40 @@ export const useProjectsStore = defineStore("projects", () => {
     };
   });
 
+  /**
+   * 设置当前选择的分类ID
+   */
   const setActiveCategoryId = (categoryId: number | null) => {
     activeCategoryId.value = categoryId;
   };
 
+  /**
+   * 设置搜索关键字
+   */
+  const setSearchQuery = (query: string) => {
+    searchQuery.value = query;
+  };
+
   return {
+    // State
     projects,
     loading,
     searchQuery,
-    filteredProjects,
-    pagination,
     activeCategoryId,
+    pagination,
+    
+    // Getters
+    filteredProjects,
+    getProjectSummary,
+    
+    // Actions
     fetchProjects,
     fetchProjectById,
     createProject,
     updateProject,
     deleteProject,
     getProjectById,
-    getProjectSummary,
     setActiveCategoryId,
+    setSearchQuery,
   };
 });

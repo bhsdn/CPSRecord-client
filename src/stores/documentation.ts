@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { DocumentationEntry } from "@/types";
-import type { ApiResponse } from "@/types/api";
-import { api, unwrap } from "@/utils/api";
+import { ElMessage } from "element-plus";
+import type { DocumentationEntry, QueryDocumentationParams, GenerateDocumentationDto } from "@/types";
+import { documentationService } from "@/services/api.service";
+import { isApiError, isCancelError } from "@/utils/api";
 
 interface DocumentationFilters {
   categoryId?: number | null;
@@ -157,72 +158,93 @@ const resolveGeneratedAt = (data?: unknown, entries: DocumentationEntry[] = []) 
   );
 };
 
+/**
+ * 文档Store
+ * 管理文档列表和生成操作
+ */
 export const useDocumentationStore = defineStore("documentation", () => {
   const entries = ref<DocumentationEntry[]>([]);
   const loading = ref(false);
   const lastSyncedAt = ref<string | null>(null);
   const error = ref<string | null>(null);
-  const lastFilters = ref<DocumentationFilters | null>(null);
+  const lastFilters = ref<QueryDocumentationParams | null>(null);
 
-  const fetchDocumentation = async (filters?: DocumentationFilters) => {
-    const normalizedFilters: DocumentationFilters = {
-      categoryId: filters?.categoryId ?? null,
-      projectId: filters?.projectId ?? null,
-      keyword: filters?.keyword?.trim() || "",
-    };
+  /**
+   * 获取文档列表
+   */
+  const fetchDocumentation = async (params?: QueryDocumentationParams) => {
     loading.value = true;
     error.value = null;
-    lastFilters.value = normalizedFilters;
+    lastFilters.value = params || null;
 
     try {
-      const params: Record<string, number | string> = {};
-      if (normalizedFilters.categoryId !== null) {
-        params.categoryId = normalizedFilters.categoryId;
-      }
-      if (normalizedFilters.projectId !== null) {
-        params.projectId = normalizedFilters.projectId;
-      }
-      if (normalizedFilters.keyword) {
-        params.keyword = normalizedFilters.keyword;
-      }
-
-      const response = await api.get<ApiResponse<unknown>>("/documentation", {
-        params,
-      });
-      const payload = unwrap(response);
+      const result = await documentationService.getList(params);
+      entries.value = result.sort(
+        (a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
+      );
       
-      // 后端直接返回数组在 data 字段中
-      const rawEntries = extractEntries(payload.data);
-      const documentationEntries = rawEntries
-        .map((item) => normalizeEntry(item))
-        .sort(
-          (a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
-        );
-
-      entries.value = documentationEntries;
-      lastSyncedAt.value = resolveGeneratedAt(payload.data, documentationEntries);
+      // 设置最后同步时间
+      if (entries.value.length > 0) {
+        lastSyncedAt.value = entries.value[0].generatedAt;
+      }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "获取文档数据失败";
-      throw err;
+      if (isCancelError(err)) {
+        console.log("文档列表请求被取消");
+        return;
+      }
+      
+      const message = isApiError(err)
+        ? err.response?.data?.message || "获取文档数据失败"
+        : "获取文档数据失败";
+      
+      error.value = message;
+      ElMessage.error(message);
+      entries.value = [];
     } finally {
       loading.value = false;
     }
   };
 
-  const regenerateDocumentation = async (subProjectIds?: number[]) => {
-    await api.post<ApiResponse<unknown>>("/documentation/generate", {
-      subProjectIds: subProjectIds?.length ? subProjectIds : undefined,
-    });
-    await fetchDocumentation(lastFilters.value ?? undefined);
+  /**
+   * 生成文档
+   */
+  const regenerateDocumentation = async (params?: GenerateDocumentationDto) => {
+    try {
+      await documentationService.generate(params);
+      ElMessage.success("文档生成任务已提交");
+      
+      // 重新获取文档列表
+      await fetchDocumentation(lastFilters.value || undefined);
+    } catch (err) {
+      const message = isApiError(err)
+        ? err.response?.data?.message || "生成文档失败"
+        : "生成文档失败";
+      
+      ElMessage.error(message);
+      throw err;
+    }
+  };
+
+  /**
+   * 清空文档列表
+   */
+  const clearEntries = () => {
+    entries.value = [];
+    lastSyncedAt.value = null;
+    error.value = null;
   };
 
   return {
+    // State
     entries,
     loading,
     lastSyncedAt,
     error,
+    
+    // Actions
     fetchDocumentation,
     regenerateDocumentation,
+    clearEntries,
   };
 });
 
