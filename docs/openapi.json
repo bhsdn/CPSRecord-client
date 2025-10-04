@@ -48,6 +48,16 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "项目分类ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -444,6 +454,16 @@
             "description": "搜索关键词",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "documentationEnabled",
+            "required": false,
+            "in": "query",
+            "description": "是否开启文档生成",
+            "schema": {
+              "example": true,
+              "type": "boolean"
             }
           }
         ],
@@ -1814,6 +1834,418 @@
           "文字口令管理"
         ]
       }
+    },
+    "/project-categories": {
+      "get": {
+        "operationId": "ProjectCategoriesController_findAll",
+        "summary": "获取项目分类列表",
+        "parameters": [
+          {
+            "name": "includeInactive",
+            "required": false,
+            "in": "query",
+            "description": "是否包含已停用分类",
+            "schema": {
+              "example": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取项目分类列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取项目分类列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目分类管理"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectCategoriesController_create",
+        "summary": "创建项目分类",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建项目分类成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "创建项目分类成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 201
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目分类管理"
+        ]
+      }
+    },
+    "/project-categories/{id}": {
+      "get": {
+        "operationId": "ProjectCategoriesController_findOne",
+        "summary": "获取项目分类详情",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取项目分类详情成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取项目分类详情成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目分类管理"
+        ]
+      },
+      "put": {
+        "operationId": "ProjectCategoriesController_update",
+        "summary": "更新项目分类",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新项目分类成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "更新项目分类成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目分类管理"
+        ]
+      },
+      "delete": {
+        "operationId": "ProjectCategoriesController_remove",
+        "summary": "删除项目分类",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除项目分类成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "删除项目分类成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "项目分类管理"
+        ]
+      }
+    },
+    "/documentation": {
+      "get": {
+        "operationId": "DocumentationController_findAll",
+        "summary": "获取开启文档的子项目列表",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": false,
+            "in": "query",
+            "description": "项目ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "项目分类ID",
+            "schema": {
+              "example": 2,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "搜索关键词",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取文档列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取文档列表成功"
+                    },
+                    "code": {
+                      "type": "number",
+                      "example": 200
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文档中心"
+        ]
+      }
     }
   },
   "info": {
@@ -1838,10 +2270,16 @@
             "type": "string",
             "description": "项目描述",
             "example": "主要推广淘宝商品，包含服装、数码等分类"
+          },
+          "categoryId": {
+            "type": "number",
+            "description": "项目分类ID",
+            "example": 1
           }
         },
         "required": [
-          "name"
+          "name",
+          "categoryId"
         ]
       },
       "UpdateProjectDto": {
@@ -1856,6 +2294,11 @@
             "type": "string",
             "description": "项目描述",
             "example": "主要推广淘宝商品，包含服装、数码等分类"
+          },
+          "categoryId": {
+            "type": "number",
+            "description": "项目分类ID",
+            "example": 1
           }
         }
       },
@@ -1880,6 +2323,11 @@
             "type": "number",
             "description": "排序序号",
             "example": 1
+          },
+          "documentationEnabled": {
+            "type": "boolean",
+            "description": "是否开启文档生成",
+            "example": true
           }
         },
         "required": [
@@ -1908,6 +2356,11 @@
             "type": "number",
             "description": "排序序号",
             "example": 1
+          },
+          "documentationEnabled": {
+            "type": "boolean",
+            "description": "是否开启文档生成",
+            "example": true
           }
         }
       },
@@ -2113,6 +2566,59 @@
         "required": [
           "ids"
         ]
+      },
+      "CreateProjectCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "分类名称",
+            "example": "电商渠道"
+          },
+          "description": {
+            "type": "string",
+            "description": "分类描述"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "排序权重",
+            "example": 10
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "是否启用",
+            "example": true,
+            "default": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateProjectCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "分类名称",
+            "example": "电商渠道"
+          },
+          "description": {
+            "type": "string",
+            "description": "分类描述"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "排序权重",
+            "example": 10
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "是否启用",
+            "example": true,
+            "default": true
+          }
+        }
       }
     }
   }

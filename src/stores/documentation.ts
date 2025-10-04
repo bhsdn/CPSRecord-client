@@ -11,6 +11,8 @@ interface DocumentationFilters {
 }
 
 type RawDocumentationEntry = DocumentationEntry & {
+  name?: string;
+  description?: string;
   sub_project_id?: number;
   sub_project_name?: string;
   project_id?: number;
@@ -38,14 +40,6 @@ type RawDocumentationEntry = DocumentationEntry & {
     name?: string;
   } | null;
 };
-
-interface DocumentationListApiData {
-  entries?: RawDocumentationEntry[] | { items?: RawDocumentationEntry[] };
-  generatedAt?: string | null;
-  lastGeneratedAt?: string | null;
-  lastSyncedAt?: string | null;
-  syncedAt?: string | null;
-}
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -77,12 +71,21 @@ const normalizeEntry = (raw: Partial<RawDocumentationEntry>): DocumentationEntry
     raw.project_name ??
     (typeof project?.name === "string" ? project.name : "");
 
-  const resolvedSubProjectId = raw.subProjectId ?? raw.sub_project_id ?? subProject?.id;
+  // 修改：如果 raw.id 存在且没有 subProjectId，说明后端直接返回的子项目数据（id 就是 subProjectId）
+  const resolvedSubProjectId = raw.subProjectId ?? raw.sub_project_id ?? subProject?.id ?? (raw.id && !raw.subProjectId ? raw.id : undefined);
   const subProjectId = Number(resolvedSubProjectId ?? 0);
-  const subProjectName =
-    raw.subProjectName ??
-    raw.sub_project_name ??
-    (typeof subProject?.name === "string" ? subProject.name : "");
+  
+  // 修改：如果 raw.name 存在且没有 subProjectName，说明后端直接返回的子项目数据（name 就是 subProjectName）
+  let subProjectName = raw.subProjectName ?? raw.sub_project_name;
+  if (!subProjectName && typeof subProject?.name === "string") {
+    subProjectName = subProject.name;
+  }
+  if (!subProjectName && typeof raw.name === "string" && !raw.subProjectName && !raw.sub_project_name) {
+    subProjectName = raw.name;
+  }
+  if (!subProjectName) {
+    subProjectName = "";
+  }
 
   let rawSnapshot: unknown =
     raw.snapshot ??
@@ -117,25 +120,38 @@ const normalizeEntry = (raw: Partial<RawDocumentationEntry>): DocumentationEntry
   };
 };
 
-const extractEntries = (data?: DocumentationListApiData): RawDocumentationEntry[] => {
-  if (!data) return [];
-  if (Array.isArray(data.entries)) return data.entries;
-  if (data.entries && typeof data.entries === "object") {
-    const maybeItems = (data.entries as { items?: RawDocumentationEntry[] }).items;
-    if (Array.isArray(maybeItems)) return maybeItems;
+const extractEntries = (data?: unknown): RawDocumentationEntry[] => {
+  // 如果直接是数组，直接返回（后端直接返回数组的情况）
+  if (Array.isArray(data)) return data;
+  
+  if (!data || typeof data !== "object") return [];
+  
+  const dataObj = data as Record<string, unknown>;
+  
+  // 如果 data.entries 是数组
+  if (Array.isArray(dataObj.entries)) return dataObj.entries;
+  
+  // 如果 data.entries.items 是数组
+  if (dataObj.entries && typeof dataObj.entries === "object") {
+    const entries = dataObj.entries as Record<string, unknown>;
+    if (Array.isArray(entries.items)) return entries.items;
   }
-  if (Array.isArray((data as unknown as { items?: RawDocumentationEntry[] }).items)) {
-    return (data as unknown as { items?: RawDocumentationEntry[] }).items ?? [];
-  }
+  
+  // 如果 data.items 是数组
+  if (Array.isArray(dataObj.items)) return dataObj.items;
+  
   return [];
 };
 
-const resolveGeneratedAt = (data?: DocumentationListApiData, entries: DocumentationEntry[] = []) => {
+const resolveGeneratedAt = (data?: unknown, entries: DocumentationEntry[] = []) => {
+  if (!data || typeof data !== "object") return null;
+  
+  const dataObj = data as Record<string, unknown>;
   return (
-    data?.generatedAt ??
-    data?.lastGeneratedAt ??
-    data?.lastSyncedAt ??
-    data?.syncedAt ??
+    (typeof dataObj.generatedAt === "string" ? dataObj.generatedAt : null) ??
+    (typeof dataObj.lastGeneratedAt === "string" ? dataObj.lastGeneratedAt : null) ??
+    (typeof dataObj.lastSyncedAt === "string" ? dataObj.lastSyncedAt : null) ??
+    (typeof dataObj.syncedAt === "string" ? dataObj.syncedAt : null) ??
     entries[0]?.generatedAt ??
     null
   );
@@ -170,10 +186,12 @@ export const useDocumentationStore = defineStore("documentation", () => {
         params.keyword = normalizedFilters.keyword;
       }
 
-      const response = await api.get<ApiResponse<DocumentationListApiData>>("/documentation", {
+      const response = await api.get<ApiResponse<unknown>>("/documentation", {
         params,
       });
       const payload = unwrap(response);
+      
+      // 后端直接返回数组在 data 字段中
       const rawEntries = extractEntries(payload.data);
       const documentationEntries = rawEntries
         .map((item) => normalizeEntry(item))
@@ -207,3 +225,4 @@ export const useDocumentationStore = defineStore("documentation", () => {
     regenerateDocumentation,
   };
 });
+
