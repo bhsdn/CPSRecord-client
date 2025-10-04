@@ -16,11 +16,15 @@
           </ul>
           <div class="flex justify-center gap-3 mt-6">
             <el-button type="primary" @click="goHome">
-              <el-icon class="mr-1"><HomeFilled /></el-icon>
+              <el-icon class="mr-1">
+                <HomeFilled />
+              </el-icon>
               返回首页
             </el-button>
             <el-button @click="goBack">
-              <el-icon class="mr-1"><Back /></el-icon>
+              <el-icon class="mr-1">
+                <Back />
+              </el-icon>
               返回上一页
             </el-button>
           </div>

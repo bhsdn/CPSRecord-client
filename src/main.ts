@@ -11,6 +11,7 @@ import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import App from "./App.vue";
 import router from "./router";
 import { setupErrorHandler } from "./utils/errorHandler";
+import { setupDirectives } from "./directives";
 import { logger } from "./utils/logger";
 
 import "element-plus/dist/index.css";
@@ -26,12 +27,16 @@ app.use(router);
 app.use(ElementPlus, {
   locale: zhCn,
   size: "default",
+  zIndex: 3000,
 });
 
 // 注册全局图标组件
 Object.entries(ElementPlusIconsVue).forEach(([name, component]) => {
   app.component(name, component);
 });
+
+// 注册全局指令
+setupDirectives(app);
 
 // 设置全局错误处理
 setupErrorHandler(app);
