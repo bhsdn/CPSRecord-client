@@ -61,7 +61,20 @@ export const useProjectsStore = defineStore("projects", () => {
     try {
       const result = await projectService.getList(params);
       projects.value = result.data || [];
-      pagination.value = result.pagination;
+      
+      // 确保 pagination 始终有值
+      if (result.pagination) {
+        pagination.value = result.pagination;
+      } else {
+        // 降级处理：使用数组长度作为 total
+        pagination.value = {
+          total: projects.value.length,
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+          totalPages: Math.ceil(projects.value.length / (params?.limit || 20)),
+        };
+      }
+      
       return result.data;
     } catch (error) {
       if (isCancelError(error)) {
@@ -75,6 +88,10 @@ export const useProjectsStore = defineStore("projects", () => {
       
       ElMessage.error(message);
       projects.value = [];
+      
+      // 重置 pagination
+      pagination.value = { total: 0, page: 1, limit: 20, totalPages: 0 };
+      
       throw error;
     } finally {
       loading.value = false;
@@ -106,7 +123,13 @@ export const useProjectsStore = defineStore("projects", () => {
     try {
       const project = await projectService.create(data);
       projects.value.unshift(project);
-      pagination.value.total += 1;
+      
+      // 安全更新 pagination
+      if (pagination.value) {
+        pagination.value.total = (pagination.value.total || 0) + 1;
+        pagination.value.totalPages = Math.ceil(pagination.value.total / (pagination.value.limit || 20));
+      }
+      
       ElMessage.success("项目创建成功");
       return project;
     } catch (error) {
@@ -147,7 +170,12 @@ export const useProjectsStore = defineStore("projects", () => {
       const target = projects.value.find((project) => project.id === id);
       if (target) {
         target.isActive = false;
-        pagination.value.total = Math.max(pagination.value.total - 1, 0);
+        
+        // 安全更新 pagination
+        if (pagination.value) {
+          pagination.value.total = Math.max((pagination.value.total || 0) - 1, 0);
+          pagination.value.totalPages = Math.ceil(pagination.value.total / (pagination.value.limit || 20));
+        }
       }
       ElMessage.success("项目删除成功");
       return target;

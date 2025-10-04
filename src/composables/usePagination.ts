@@ -2,7 +2,8 @@
  * 分页管理 Composable
  */
 
-import { ref, computed } from "vue";
+import { ref, computed, readonly } from "vue";
+import type { Ref } from "vue";
 import { PAGINATION } from "@/utils/constants";
 import type { PaginationMeta } from "@/types";
 

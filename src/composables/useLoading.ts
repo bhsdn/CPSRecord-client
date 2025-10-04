@@ -2,7 +2,8 @@
  * 加载状态管理 Composable
  */
 
-import { ref } from "vue";
+import { ref, readonly } from "vue";
+import type { Ref } from "vue";
 
 export interface UseLoadingReturn {
   loading: Readonly<Ref<boolean>>;

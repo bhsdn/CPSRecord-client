@@ -1,14 +1,6 @@
 <template>
   <div class="search-bar">
-    <el-input
-      :model-value="modelValue"
-      :placeholder="placeholder"
-      clearable
-      :size="size"
-      @update:model-value="handleInput"
-      @keyup.enter="handleSearch"
-      @clear="handleClear"
-    >
+    <el-input :model-value="modelValue" :placeholder="placeholder" clearable :size="size" @update:model-value="handleInput" @keyup.enter="handleSearch" @clear="handleClear">
       <template #prefix>
         <el-icon>
           <Search />

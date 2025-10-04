@@ -225,8 +225,10 @@ class ApiClient {
       return;
     }
 
-    // 其他错误显示提示
-    ElMessage.error(message);
+    // 只显示网络错误和系统错误（5xx），业务错误（4xx）由调用方处理
+    if (!error.response || error.response.status >= 500 || error.code === "ECONNABORTED" || error.message === "Network Error") {
+      ElMessage.error(message);
+    }
   }
 
   /**
@@ -372,6 +374,6 @@ export function isApiError(error: unknown): error is AxiosError<ApiError> {
 /**
  * 判断是否为请求取消错误
  */
-export function isCancelError(error: unknown): error is CanceledError {
-  return error instanceof CanceledError;
+export function isCancelError(error: unknown): error is CanceledError<unknown> {
+  return axios.isCancel(error);
 }

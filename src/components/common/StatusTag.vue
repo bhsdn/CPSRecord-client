@@ -9,11 +9,22 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { SuccessFilled, WarningFilled, CircleCloseFilled, InfoFilled } from "@element-plus/icons-vue";
+import {
+  SuccessFilled,
+  WarningFilled,
+  CircleCloseFilled,
+  InfoFilled,
+} from "@element-plus/icons-vue";
 import type { ExpiryStatus } from "@/types";
 
 interface Props {
-  status: ExpiryStatus | "active" | "inactive" | "enabled" | "disabled" | string;
+  status:
+    | ExpiryStatus
+    | "active"
+    | "inactive"
+    | "enabled"
+    | "disabled"
+    | string;
   text?: string;
   size?: "large" | "default" | "small";
   effect?: "dark" | "light" | "plain";

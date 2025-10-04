@@ -46,8 +46,50 @@ export const projectService = {
    * 获取项目列表
    */
   async getList(params?: QueryProjectParams): Promise<PaginatedResponse<Project>> {
-    const response = await api.get<ApiResponse<PaginatedResponse<Project>>>("/projects", { params });
-    return unwrapData(response) ?? { data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+    const response = await api.get<ApiResponse<any>>("/projects", { params });
+    const rawData = unwrapData(response);
+    
+    // 处理不同的响应格式
+    if (!rawData) {
+      return { data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+    }
+    
+    // 格式1: { data: [...], pagination: {...} }
+    if (rawData.data && rawData.pagination) {
+      return {
+        data: rawData.data,
+        pagination: rawData.pagination,
+      };
+    }
+    
+    // 格式2: { items: [...], total: 10, page: 1, ... }
+    if (rawData.items) {
+      return {
+        data: rawData.items,
+        pagination: {
+          page: rawData.page || 1,
+          limit: rawData.limit || 10,
+          total: rawData.total || rawData.items.length,
+          totalPages: rawData.totalPages || Math.ceil((rawData.total || rawData.items.length) / (rawData.limit || 10)),
+        },
+      };
+    }
+    
+    // 格式3: 直接是数组 [...]
+    if (Array.isArray(rawData)) {
+      return {
+        data: rawData,
+        pagination: {
+          page: 1,
+          limit: rawData.length,
+          total: rawData.length,
+          totalPages: 1,
+        },
+      };
+    }
+    
+    // 降级：返回空数据
+    return { data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
   },
 
   /**
@@ -91,8 +133,15 @@ export const projectService = {
    * 获取项目的子项目列表
    */
   async getSubProjects(id: number): Promise<SubProject[]> {
-    const response = await api.get<ApiResponse<SubProject[]>>(`/projects/${id}/sub-projects`);
-    return unwrapData(response) ?? [];
+    const response = await api.get<ApiResponse<any>>(`/projects/${id}/sub-projects`);
+    const rawData = unwrapData(response);
+    
+    // 兼容不同格式
+    if (Array.isArray(rawData)) return rawData;
+    if (rawData?.items && Array.isArray(rawData.items)) return rawData.items;
+    if (rawData?.data && Array.isArray(rawData.data)) return rawData.data;
+    
+    return [];
   },
 };
 
@@ -104,10 +153,17 @@ export const projectCategoryService = {
    * 获取分类列表
    */
   async getList(includeInactive = false): Promise<ProjectCategory[]> {
-    const response = await api.get<ApiResponse<ProjectCategory[]>>("/project-categories", {
+    const response = await api.get<ApiResponse<any>>("/project-categories", {
       params: { includeInactive },
     });
-    return unwrapData(response) ?? [];
+    const rawData = unwrapData(response);
+    
+    // 兼容不同格式
+    if (Array.isArray(rawData)) return rawData;
+    if (rawData?.items && Array.isArray(rawData.items)) return rawData.items;
+    if (rawData?.data && Array.isArray(rawData.data)) return rawData.data;
+    
+    return [];
   },
 
   /**
@@ -156,8 +212,15 @@ export const subProjectService = {
    * 获取子项目列表
    */
   async getList(params?: QuerySubProjectParams): Promise<SubProject[]> {
-    const response = await api.get<ApiResponse<SubProject[]>>("/sub-projects", { params });
-    return unwrapData(response) ?? [];
+    const response = await api.get<ApiResponse<any>>("/sub-projects", { params });
+    const rawData = unwrapData(response);
+    
+    // 兼容不同格式
+    if (Array.isArray(rawData)) return rawData;
+    if (rawData?.items && Array.isArray(rawData.items)) return rawData.items;
+    if (rawData?.data && Array.isArray(rawData.data)) return rawData.data;
+    
+    return [];
   },
 
   /**
@@ -213,8 +276,15 @@ export const contentTypeService = {
    * 获取内容类型列表
    */
   async getList(): Promise<ContentType[]> {
-    const response = await api.get<ApiResponse<ContentType[]>>("/content-types");
-    return unwrapData(response) ?? [];
+    const response = await api.get<ApiResponse<any>>("/content-types");
+    const rawData = unwrapData(response);
+    
+    // 兼容不同格式
+    if (Array.isArray(rawData)) return rawData;
+    if (rawData?.items && Array.isArray(rawData.items)) return rawData.items;
+    if (rawData?.data && Array.isArray(rawData.data)) return rawData.data;
+    
+    return [];
   },
 
   /**
@@ -253,8 +323,15 @@ export const contentService = {
    * 获取内容列表
    */
   async getList(params?: QueryContentParams): Promise<SubProjectContent[]> {
-    const response = await api.get<ApiResponse<SubProjectContent[]>>("/contents", { params });
-    return unwrapData(response) ?? [];
+    const response = await api.get<ApiResponse<any>>("/contents", { params });
+    const rawData = unwrapData(response);
+    
+    // 兼容不同格式
+    if (Array.isArray(rawData)) return rawData;
+    if (rawData?.items && Array.isArray(rawData.items)) return rawData.items;
+    if (rawData?.data && Array.isArray(rawData.data)) return rawData.data;
+    
+    return [];
   },
 
   /**
@@ -303,8 +380,15 @@ export const textCommandService = {
    * 获取文字口令列表
    */
   async getList(params?: QueryTextCommandParams): Promise<TextCommand[]> {
-    const response = await api.get<ApiResponse<TextCommand[]>>("/text-commands", { params });
-    return unwrapData(response) ?? [];
+    const response = await api.get<ApiResponse<any>>("/text-commands", { params });
+    const rawData = unwrapData(response);
+    
+    // 兼容不同格式
+    if (Array.isArray(rawData)) return rawData;
+    if (rawData?.items && Array.isArray(rawData.items)) return rawData.items;
+    if (rawData?.data && Array.isArray(rawData.data)) return rawData.data;
+    
+    return [];
   },
 
   /**
