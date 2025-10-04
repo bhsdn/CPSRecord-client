@@ -387,27 +387,22 @@ onMounted(async () => {
 
 /* 头部卡片 */
 .header-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
+  background: white;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header-card :deep(.el-card__body) {
   padding: 1.5rem;
 }
 
-.header-info h2,
-.header-info p {
-  color: white;
-}
-
 .stats-bar .stat-item {
   display: flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
 }
 
 .stats-bar .el-icon {
@@ -415,7 +410,7 @@ onMounted(async () => {
 }
 
 .stats-bar .el-divider {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: #d1d5db;
 }
 
 /* 分类区域 */
@@ -436,9 +431,11 @@ onMounted(async () => {
 
 .category-header {
   padding: 1rem;
-  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+  background: #f9fafb;
   border-left: 4px solid #3b82f6;
   border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #3b82f6;
 }
 
 .category-icon {
@@ -499,7 +496,7 @@ onMounted(async () => {
 
 .snapshot-item {
   padding: 0.875rem;
-  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  background: #fafafa;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   transition: all 0.2s ease;
