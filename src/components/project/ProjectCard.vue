@@ -18,6 +18,14 @@
     </template>
 
     <div class="space-y-3">
+      <div class="flex items-center gap-2 text-xs">
+        <el-tag v-if="project.category?.name" size="small" type="success">{{ project.category.name }}</el-tag>
+        <el-tag v-else size="small" type="info">未分类</el-tag>
+        <el-tag size="small" type="primary">
+          <el-icon class="mr-1 align-middle"><DocumentCopy /></el-icon>
+          文档 {{ project.documentationCount }}
+        </el-tag>
+      </div>
       <p class="line-clamp-2 text-sm text-slate-600">
         {{ project.description || "暂无描述" }}
       </p>
@@ -35,7 +43,7 @@
 <script setup lang="ts">
 import type { Project } from "@/types";
 import { useDateFormat } from "@/composables/useDateFormat";
-import { CollectionTag, MoreFilled } from "@element-plus/icons-vue";
+import { CollectionTag, DocumentCopy, MoreFilled } from "@element-plus/icons-vue";
 
 interface Props {
   project: Project;

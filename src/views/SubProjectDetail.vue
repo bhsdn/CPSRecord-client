@@ -20,6 +20,19 @@
               <el-icon><Tickets /></el-icon>
               文字口令 {{ subProject.textCommands.length }}
             </span>
+            <span class="flex items-center gap-2">
+              <el-tag :type="subProject.documentationEnabled ? 'success' : 'info'" size="small">
+                <el-icon class="mr-1"><DocumentCopy /></el-icon>
+                文档{{ subProject.documentationEnabled ? "已开启" : "未开启" }}
+              </el-tag>
+              <el-switch
+                :model-value="subProject.documentationEnabled"
+                size="small"
+                :loading="documentationSwitchLoading"
+                @click.stop
+                @change="handleDocumentationToggle"
+              />
+            </span>
           </div>
         </div>
       </template>
@@ -170,14 +183,7 @@ import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import type { FormInstance, FormRules } from "element-plus";
-import {
-  Timer,
-  Document,
-  Tickets,
-  Edit,
-  Plus,
-  ChatLineSquare,
-} from "@element-plus/icons-vue";
+import { Timer, Document, Tickets, Edit, Plus, ChatLineSquare, DocumentCopy } from "@element-plus/icons-vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useProjectsStore } from "@/stores/projects";
 import { useSubProjectsStore } from "@/stores/subProjects";
@@ -203,6 +209,7 @@ const subProjectId = Number(route.params.id);
 const subProject = computed(() => subProjectsStore.getSubProjectById(subProjectId));
 
 const submitting = ref(false);
+const documentationSwitchLoading = ref(false);
 // 记录接口错误信息，便于在界面展示统一提示
 const loadError = ref<string | null>(null);
 const editingContent = ref<SubProjectContent | null>(null);
@@ -280,7 +287,12 @@ const closeSubProjectDialog = () => {
   subProjectDialogVisible.value = false;
 };
 
-const handleSubProjectSubmit = async (payload: { name: string; description?: string; sortOrder: number }) => {
+const handleSubProjectSubmit = async (payload: {
+  name: string;
+  description?: string;
+  sortOrder: number;
+  documentationEnabled: boolean;
+}) => {
   if (!subProject.value) return;
   submitting.value = true;
   try {
@@ -291,6 +303,21 @@ const handleSubProjectSubmit = async (payload: { name: string; description?: str
     ElMessage.error("更新子项目失败");
   } finally {
     submitting.value = false;
+  }
+};
+
+const handleDocumentationToggle = async (enabled: boolean) => {
+  if (!subProject.value) return;
+  const previous = subProject.value.documentationEnabled;
+  documentationSwitchLoading.value = true;
+  try {
+    await subProjectsStore.updateSubProject(subProject.value.id, { documentationEnabled: enabled });
+    ElMessage.success(enabled ? "已开启文档生成" : "已关闭文档生成");
+  } catch (error) {
+    subProject.value.documentationEnabled = previous;
+    ElMessage.error("更新文档开关失败");
+  } finally {
+    documentationSwitchLoading.value = false;
   }
 };
 

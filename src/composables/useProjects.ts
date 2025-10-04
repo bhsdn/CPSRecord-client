@@ -6,12 +6,14 @@ import { useSubProjectsStore } from "@/stores/subProjects";
 export function useProjects() {
   const projectsStore = useProjectsStore();
   const subProjectsStore = useSubProjectsStore();
-  const { filteredProjects, loading, searchQuery, getProjectSummary, pagination } = storeToRefs(projectsStore);
+  const { filteredProjects, loading, searchQuery, getProjectSummary, pagination, activeCategoryId } =
+    storeToRefs(projectsStore);
   const { subProjectStats } = storeToRefs(subProjectsStore);
 
   const projectStats = computed(() => ({
     totalProjects: getProjectSummary.value.total,
     lastUpdated: getProjectSummary.value.updatedAt,
+    documentationTotal: getProjectSummary.value.documentationTotal,
     subProjectStats: subProjectStats.value,
   }));
 
@@ -22,5 +24,6 @@ export function useProjects() {
     searchQuery,
     pagination,
     projectStats,
+    activeCategoryId,
   };
 }
