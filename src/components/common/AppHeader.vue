@@ -19,7 +19,7 @@
           </div>
           <div class="hidden items-center gap-1 md:flex">
             <el-icon><Timer /></el-icon>
-            <span>最近更新：{{ projectStats.lastUpdated || "--" }}</span>
+            <span>最近更新：{{ projectStats.lastUpdated || '--' }}</span>
           </div>
         </div>
         <nav class="flex items-center gap-2">
@@ -44,31 +44,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { RouterLink, useRoute } from "vue-router";
-import { useProjects } from "@/composables/useProjects";
-import { Collection, FolderOpened, Timer, List, Files, DocumentCopy } from "@element-plus/icons-vue";
+import { computed } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
+import { useProjects } from '@/composables/useProjects';
+import { Collection, FolderOpened, Timer, List, Files, DocumentCopy, Grid } from '@element-plus/icons-vue';
 
 const route = useRoute();
 const { projectStats } = useProjects();
 
 const navItems = computed(() => [
   {
-    label: "项目管理",
-    path: "/projects",
-    match: "/projects",
+    label: '项目管理',
+    path: '/projects',
+    match: '/projects',
     icon: List,
   },
   {
-    label: "内容类型",
-    path: "/content-types",
-    match: "/content-types",
+    label: '项目分类',
+    path: '/project-categories',
+    match: '/project-categories',
+    icon: Grid,
+  },
+  {
+    label: '内容类型',
+    path: '/content-types',
+    match: '/content-types',
     icon: Files,
   },
   {
-    label: "文档中心",
-    path: "/documentation",
-    match: "/documentation",
+    label: '文档中心',
+    path: '/documentation',
+    match: '/documentation',
     icon: DocumentCopy,
   },
 ]);

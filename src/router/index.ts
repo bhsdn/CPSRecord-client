@@ -32,6 +32,14 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/project-categories",
+    name: "ProjectCategoryManagement",
+    component: () => import("@/views/ProjectCategoryManagement.vue"),
+    meta: {
+      title: "项目分类管理",
+    },
+  },
+  {
     path: "/content-types",
     name: "ContentManagement",
     component: () => import("@/views/ContentManagement.vue"),

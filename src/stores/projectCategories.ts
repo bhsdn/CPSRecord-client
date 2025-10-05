@@ -48,10 +48,54 @@ export const useProjectCategoriesStore = defineStore("projectCategories", () => 
 
   const activeCategories = computed(() => categories.value.filter((item) => item.isActive));
 
+  const createCategory = async (payload: Omit<ProjectCategory, 'id' | 'projectCount'>) => {
+    try {
+      const response = await api.post<ApiResponse<RawProjectCategory>>('/project-categories', payload);
+      const data = unwrap(response);
+      const newCategory = normalizeCategory(data.data);
+      categories.value.push(newCategory);
+      return newCategory;
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('创建项目分类失败');
+    }
+  };
+
+  const updateCategory = async (id: number, payload: Partial<ProjectCategory>) => {
+    try {
+      const response = await api.put<ApiResponse<RawProjectCategory>>(`/project-categories/${id}`, payload);
+      const data = unwrap(response);
+      const updatedCategory = normalizeCategory(data.data);
+      const index = categories.value.findIndex((item) => item.id === id);
+      if (index !== -1) {
+        categories.value[index] = updatedCategory;
+      }
+      return updatedCategory;
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('更新项目分类失败');
+    }
+  };
+
+  const deleteCategory = async (id: number) => {
+    try {
+      await api.delete(`/project-categories/${id}`);
+      categories.value = categories.value.filter((item) => item.id !== id);
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('删除项目分类失败');
+    }
+  };
+
+  const getCategoryById = (id: number) => {
+    return categories.value.find((item) => item.id === id);
+  };
+
   return {
     categories,
     activeCategories,
     loading,
     fetchCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    getCategoryById,
   };
 });
