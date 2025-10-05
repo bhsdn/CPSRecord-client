@@ -8,42 +8,41 @@
         </div>
         <div class="flex items-center gap-2 text-xs text-slate-500">
           <span class="flex items-center gap-1">
-            <el-icon><Collection /></el-icon>
+            <el-icon>
+              <Collection />
+            </el-icon>
             项目总数：{{ pagination.total }}
           </span>
           <span class="flex items-center gap-1">
-            <el-icon><TrendCharts /></el-icon>
+            <el-icon>
+              <TrendCharts />
+            </el-icon>
             子项目总数：{{ projectStats.subProjectStats.total }}
           </span>
           <span class="flex items-center gap-1">
-            <el-icon><Tickets /></el-icon>
+            <el-icon>
+              <Tickets />
+            </el-icon>
             文字口令：{{ projectStats.subProjectStats.commandTotal }}
           </span>
           <span class="flex items-center gap-1">
-            <el-icon><DocumentCopy /></el-icon>
+            <el-icon>
+              <DocumentCopy />
+            </el-icon>
             文档数：{{ projectStats.documentationTotal }}
           </span>
         </div>
       </div>
 
       <ProjectSearch v-model="searchQuery">
-        <el-select
-          v-model="selectedCategoryId"
-          placeholder="全部分类"
-          clearable
-          class="w-36"
-          @clear="handleCategoryReset"
-        >
+        <el-select v-model="selectedCategoryId" placeholder="全部分类" clearable class="w-36" @clear="handleCategoryReset">
           <el-option :value="null" label="全部分类" />
-          <el-option
-            v-for="category in activeCategories"
-            :key="category.id"
-            :label="category.name"
-            :value="category.id"
-          />
+          <el-option v-for="category in activeCategories" :key="category.id" :label="category.name" :value="category.id" />
         </el-select>
         <el-button type="primary" @click="openCreateDialog">
-          <el-icon class="mr-1"><Plus /></el-icon>
+          <el-icon class="mr-1">
+            <Plus />
+          </el-icon>
           新建项目
         </el-button>
       </ProjectSearch>
@@ -63,39 +62,18 @@
     <LoadingSpinner v-if="loading" text="项目数据加载中..." />
 
     <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <ProjectCard
-        v-for="project in filteredProjects"
-        :key="project.id"
-        :project="project"
-        @click="goProjectDetail(project.id)"
-        @edit="openEditDialog"
-        @delete="confirmDelete"
-      />
+      <ProjectCard v-for="project in filteredProjects" :key="project.id" :project="project" @click="goProjectDetail(project.id)" @edit="openEditDialog" @delete="confirmDelete" />
     </div>
 
     <el-empty v-if="!loading && !filteredProjects.length" description="暂无项目，点击新建项目开始管理" />
   </section>
 
   <el-dialog :title="dialogTitle" :model-value="dialogVisible" width="520px" @close="closeDialog">
-    <ProjectForm
-      :model-value="editingProject"
-      :submit-text="editingProject ? '保存修改' : '创建项目'"
-      :submitting="submitting"
-      :categories="activeCategories"
-      @submit="handleSubmit"
-      @cancel="closeDialog"
-    />
+    <ProjectForm :model-value="editingProject" :submit-text="editingProject ? '保存修改' : '创建项目'" :submitting="submitting" :categories="activeCategories" @submit="handleSubmit" @cancel="closeDialog" />
   </el-dialog>
 
-  <ConfirmDialog
-    :visible="deleteDialogVisible"
-    title="删除项目"
-    description="确定删除该项目吗？项目及其子项目将被隐藏。"
-    confirm-text="确认删除"
-    :loading="submitting"
-    @confirm="handleDelete"
-    @cancel="deleteDialogVisible = false"
-  />
+  <ConfirmDialog :visible="deleteDialogVisible" title="删除项目" description="确定删除该项目吗？项目及其子项目将被隐藏。" confirm-text="确认删除" :loading="submitting" @confirm="handleDelete"
+    @cancel="deleteDialogVisible = false" />
 </template>
 
 <script setup lang="ts">
@@ -103,7 +81,13 @@ import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { TrendCharts, Tickets, Plus, Collection, DocumentCopy } from "@element-plus/icons-vue";
+import {
+  TrendCharts,
+  Tickets,
+  Plus,
+  Collection,
+  DocumentCopy,
+} from "@element-plus/icons-vue";
 import ProjectCard from "@/components/project/ProjectCard.vue";
 import ProjectForm from "@/components/project/ProjectForm.vue";
 import ProjectSearch from "@/components/project/ProjectSearch.vue";
@@ -144,7 +128,9 @@ const selectedCategoryId = computed({
   set: (value: number | null | undefined) => setActiveCategoryId(value ?? null),
 });
 
-const dialogTitle = computed(() => (editingProject.value ? "编辑项目" : "新建项目"));
+const dialogTitle = computed(() =>
+  editingProject.value ? "编辑项目" : "新建项目"
+);
 
 // 打开新建弹窗
 const openCreateDialog = () => {
@@ -165,7 +151,11 @@ const closeDialog = () => {
 };
 
 // 处理创建或更新项目的提交逻辑
-const handleSubmit = async (payload: { name: string; description?: string | null; categoryId: number }) => {
+const handleSubmit = async (payload: {
+  name: string;
+  description?: string | null;
+  categoryId: number;
+}) => {
   submitting.value = true;
   try {
     if (editingProject.value) {

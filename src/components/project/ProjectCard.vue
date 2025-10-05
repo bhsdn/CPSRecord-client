@@ -1,11 +1,21 @@
+<!--
+ * @Descripttion: js
+ * @Version: 1.0
+ * @Author: name
+ * @Date: 2025-09-20 01:29:01
+ * @LastEditors: name
+ * @LastEditTime: 2025-10-05 12:46:41
+-->
 <template>
   <el-card class="project-card cursor-pointer transition-shadow hover:shadow-lg" @click="handleClick">
     <template #header>
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold text-slate-800 truncate">{{ project.name }}</h3>
-        <el-dropdown @command="handleCommand" trigger="click" @click.stop>
-          <el-button type="text" size="small">
-            <el-icon><MoreFilled /></el-icon>
+        <el-dropdown @command="handleCommand" trigger="click">
+          <el-button type="text" size="small" @click.stop>
+            <el-icon>
+              <MoreFilled />
+            </el-icon>
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -22,7 +32,9 @@
         <el-tag v-if="project.category?.name" size="small" type="success">{{ project.category.name }}</el-tag>
         <el-tag v-else size="small" type="info">未分类</el-tag>
         <el-tag size="small" type="primary">
-          <el-icon class="mr-1 align-middle"><DocumentCopy /></el-icon>
+          <el-icon class="mr-1 align-middle">
+            <DocumentCopy />
+          </el-icon>
           文档 {{ project.documentationCount }}
         </el-tag>
       </div>
@@ -31,7 +43,9 @@
       </p>
       <div class="flex items-center justify-between text-xs text-slate-500">
         <span class="flex items-center gap-1">
-          <el-icon><CollectionTag /></el-icon>
+          <el-icon>
+            <CollectionTag />
+          </el-icon>
           {{ project.subProjectCount }} 个子项目
         </span>
         <span>{{ formatDate(project.updatedAt) }}</span>
@@ -43,7 +57,11 @@
 <script setup lang="ts">
 import type { Project } from "@/types";
 import { useDateFormat } from "@/composables/useDateFormat";
-import { CollectionTag, DocumentCopy, MoreFilled } from "@element-plus/icons-vue";
+import {
+  CollectionTag,
+  DocumentCopy,
+  MoreFilled,
+} from "@element-plus/icons-vue";
 
 interface Props {
   project: Project;

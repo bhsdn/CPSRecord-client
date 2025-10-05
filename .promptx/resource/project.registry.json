@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "source": "project",
+  "metadata": {
+    "version": "2.0.0",
+    "description": "project 级资源注册表",
+    "createdAt": "2025-10-05T04:38:18.031Z",
+    "updatedAt": "2025-10-05T04:38:18.227Z",
+    "resourceCount": 1
+  },
+  "resources": [
+    {
+      "id": "cps-dev-expert",
+      "source": "project",
+      "protocol": "role",
+      "name": "Cps Dev Expert 角色",
+      "description": "专业角色，提供特定领域的专业能力",
+      "reference": "@project://.promptx/resource/role/cps-dev-expert/cps-dev-expert.role.md",
+      "metadata": {
+        "createdAt": "2025-10-05T04:38:18.193Z",
+        "updatedAt": "2025-10-05T04:38:18.193Z",
+        "scannedAt": "2025-10-05T04:38:18.193Z",
+        "path": "role/cps-dev-expert/cps-dev-expert.role.md"
+      }
+    }
+  ],
+  "stats": {
+    "totalResources": 1,
+    "byProtocol": {
+      "role": 1
+    },
+    "bySource": {
+      "project": 1
+    }
+  }
+}
