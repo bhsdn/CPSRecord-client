@@ -27,10 +27,12 @@ export const useProjectCategoriesStore = defineStore("projectCategories", () => 
   const categories = ref<ProjectCategory[]>([]);
   const loading = ref(false);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (includeInactive = true) => {
     loading.value = true;
     try {
-      const response = await api.get<ApiResponse<CategoryListResponse | RawProjectCategory[]>>("/project-categories");
+      const response = await api.get<ApiResponse<CategoryListResponse | RawProjectCategory[]>>("/project-categories", {
+        params: { includeInactive },
+      });
       const payload = unwrap(response);
       const data = payload.data;
       const items = Array.isArray(data)

@@ -6,13 +6,12 @@
           <h2 class="text-2xl font-semibold text-slate-900">项目分类管理</h2>
           <p class="text-sm text-slate-500">管理项目分类，支持分类的创建、编辑、排序和启停</p>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs text-slate-500">
-            <el-icon class="mr-1">
-              <Collection />
-            </el-icon>
-            分类总数：{{ categories.length }}
-          </span>
+        <div class="flex flex-wrap items-center gap-2">
+          <el-radio-group v-model="statusFilter" size="small">
+            <el-radio-button value="all">全部 ({{ categories.length }})</el-radio-button>
+            <el-radio-button value="active">已启用 ({{ activeCount }})</el-radio-button>
+            <el-radio-button value="inactive">已停用 ({{ inactiveCount }})</el-radio-button>
+          </el-radio-group>
           <el-button type="primary" @click="openCreateDialog">
             <el-icon class="mr-1">
               <Plus />
@@ -36,7 +35,7 @@
 
     <LoadingSpinner v-if="loading" text="分类数据加载中..." />
 
-    <div v-else-if="categories.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div v-else-if="sortedCategories.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <ProjectCategoryCard
         v-for="category in sortedCategories"
         :key="category.id"
@@ -47,7 +46,7 @@
       />
     </div>
 
-    <el-empty v-else description="暂无分类，点击新建分类开始管理" />
+    <el-empty v-else :description="emptyDescription" />
   </section>
 
   <el-dialog :title="dialogTitle" :model-value="dialogVisible" width="520px" @close="closeDialog">
@@ -92,12 +91,36 @@ const editingCategory = ref<ProjectCategory | null>(null);
 const deletingCategory = ref<ProjectCategory | null>(null);
 const submitting = ref(false);
 const loadError = ref<string | null>(null);
+const statusFilter = ref<'all' | 'active' | 'inactive'>('all');
+
+const activeCount = computed(() => categories.value.filter(c => c.isActive).length);
+const inactiveCount = computed(() => categories.value.filter(c => !c.isActive).length);
+
+const filteredCategories = computed(() => {
+  if (statusFilter.value === 'active') {
+    return categories.value.filter(c => c.isActive);
+  }
+  if (statusFilter.value === 'inactive') {
+    return categories.value.filter(c => !c.isActive);
+  }
+  return categories.value;
+});
 
 const sortedCategories = computed(() => {
-  return [...categories.value].sort((a, b) => b.sortOrder - a.sortOrder);
+  return [...filteredCategories.value].sort((a, b) => b.sortOrder - a.sortOrder);
 });
 
 const dialogTitle = computed(() => (editingCategory.value ? '编辑分类' : '新建分类'));
+
+const emptyDescription = computed(() => {
+  if (statusFilter.value === 'active') {
+    return '暂无启用的分类';
+  }
+  if (statusFilter.value === 'inactive') {
+    return '暂无停用的分类';
+  }
+  return '暂无分类，点击新建分类开始管理';
+});
 
 const deleteConfirmText = computed(() => {
   if (!deletingCategory.value) return '确定删除该分类吗？';
