@@ -51,9 +51,11 @@
       <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div class="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
           <el-select v-model="filters.categoryId" placeholder="选择主项目分类" clearable class="w-full lg:w-48" @change="handleCategoryChange">
+            <el-option :value="null" label="全部分类" />
             <el-option v-for="category in activeCategories" :key="category.id" :label="category.name" :value="category.id" />
           </el-select>
           <el-select v-model="filters.projectId" placeholder="选择主项目" clearable class="w-full lg:w-52" @change="handleProjectChange">
+            <el-option :value="null" label="全部项目" />
             <el-option v-for="project in filteredProjects" :key="project.id" :label="project.name" :value="project.id" />
           </el-select>
           <el-input v-model="filters.keyword" placeholder="搜索子项目或内容关键字" clearable class="w-full lg:flex-1" @keyup.enter="handleSearch">
