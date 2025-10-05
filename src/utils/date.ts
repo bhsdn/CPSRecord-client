@@ -8,9 +8,11 @@ import type { ExpiryStatus } from "@/types";
 /**
  * 格式化日期
  */
-export function formatDate(date: string | Date, withTime = true): string {
+export function formatDate(date: string | Date | undefined | null, withTime = true): string {
+  if (!date) return "--";
+  
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  if (Number.isNaN(dateObj.getTime())) return "--";
+  if (!dateObj || Number.isNaN(dateObj.getTime())) return "--";
   
   return new Intl.DateTimeFormat("zh-CN", {
     year: "numeric",
@@ -25,16 +27,18 @@ export function formatDate(date: string | Date, withTime = true): string {
 /**
  * 格式化为日期字符串（yyyy-MM-dd）
  */
-export function formatDateOnly(date: string | Date): string {
+export function formatDateOnly(date: string | Date | undefined | null): string {
   return formatDate(date, false);
 }
 
 /**
  * 格式化相对时间（如：2小时前）
  */
-export function formatRelativeTime(date: string | Date): string {
+export function formatRelativeTime(date: string | Date | undefined | null): string {
+  if (!date) return "--";
+  
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  if (Number.isNaN(dateObj.getTime())) return "--";
+  if (!dateObj || Number.isNaN(dateObj.getTime())) return "--";
 
   const now = new Date();
   const diff = now.getTime() - dateObj.getTime();
