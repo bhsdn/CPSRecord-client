@@ -6,7 +6,7 @@
       <el-skeleton v-if="loading" animated :count="3">
         <template #template>
           <el-card class="mb-4">
-            <el-skeleton-item variant="h1" style="width: 40%;" />
+            <el-skeleton-item variant="h1" style="width: 40%" />
             <el-skeleton-item variant="text" />
             <el-skeleton-item variant="text" />
           </el-card>
@@ -16,32 +16,36 @@
       <el-collapse v-else accordion>
         <el-collapse-item v-for="subProject in subProjects" :key="subProject.id" :name="subProject.id">
           <template #title>
-            <div class="flex flex-1 items-center justify-between pr-4">
-              <div>
-                <div class="flex items-center gap-2">
+            <div class="flex w-full items-center justify-between gap-6 py-2 pl-4 pr-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-base font-semibold text-slate-800">{{ subProject.name }}</span>
                   <el-tag size="small" type="info">排序 {{ subProject.sortOrder }}</el-tag>
                 </div>
-                <p class="mt-1 text-xs text-slate-500">{{ subProject.description || "暂无描述" }}</p>
+                <p class="mt-1 text-xs text-slate-500">{{ subProject.description || '暂无描述' }}</p>
               </div>
-              <div class="flex items-center gap-2 text-xs text-slate-500">
-                <span class="flex items-center gap-1">
-                  <el-icon><Document /></el-icon>
-                  内容 {{ subProject.contents.length }}
-                </span>
-                <span class="flex items-center gap-1">
-                  <el-icon><Tickets /></el-icon>
-                  口令 {{ subProject.textCommands.length }}
-                </span>
-                <el-tag :type="subProject.documentationEnabled ? 'success' : 'info'" size="small">
-                  文档{{ subProject.documentationEnabled ? "已开启" : "未开启" }}
-                </el-tag>
-                <el-switch
-                  :model-value="subProject.documentationEnabled"
-                  size="small"
-                  @click.stop
-                  @change="(value: boolean) => emit('toggle-documentation', subProject, value)"
-                />
+              <div class="flex items-center gap-4 flex-shrink-0 flex-wrap md:flex-nowrap">
+                <div class="flex items-center gap-3 text-xs text-slate-500">
+                  <span class="flex items-center gap-1 whitespace-nowrap">
+                    <el-icon><Document /></el-icon>
+                    内容 {{ subProject.contents.length }}
+                  </span>
+                  <span class="flex items-center gap-1 whitespace-nowrap">
+                    <el-icon><Tickets /></el-icon>
+                    口令 {{ subProject.textCommands.length }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <el-tag :type="subProject.documentationEnabled ? 'success' : 'info'" size="small">
+                    文档{{ subProject.documentationEnabled ? '已开启' : '未开启' }}
+                  </el-tag>
+                  <el-switch
+                    :model-value="subProject.documentationEnabled"
+                    size="small"
+                    @click.stop
+                    @change="(value: boolean) => emit('toggle-documentation', subProject, value)"
+                  />
+                </div>
               </div>
             </div>
           </template>
@@ -71,7 +75,7 @@
                       编辑
                     </el-button>
                   </div>
-                  <p class="mt-2 break-words text-sm text-slate-600">{{ content.contentValue }}</p>
+                  <p class="mt-2 break-words text-sm text-slate-600 description-text">{{ content.contentValue }}</p>
                 </div>
               </div>
             </el-card>
@@ -95,8 +99,10 @@
                     <span class="font-medium text-slate-700">{{ command.commandText }}</span>
                     <div class="flex items-center gap-2">
                       <ExpiryStatus :expiry-date="command.expiryDate" size="small" />
-                      <el-dropdown @command="(cmd) => handleCommandAction(cmd, subProject, command)">
-                        <span class="cursor-pointer text-primary-600"><el-icon><MoreFilled /></el-icon></span>
+                      <el-dropdown @command="cmd => handleCommandAction(cmd, subProject, command)">
+                        <span class="cursor-pointer text-primary-600">
+                          <el-icon><MoreFilled /></el-icon>
+                        </span>
                         <template #dropdown>
                           <el-dropdown-menu>
                             <el-dropdown-item command="edit">编辑</el-dropdown-item>
@@ -111,11 +117,9 @@
             </el-card>
           </div>
 
-          <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-4 pr-4">
             <el-button size="small" @click="emit('edit', subProject)">编辑子项目</el-button>
-            <el-button size="small" type="danger" plain @click="emit('delete', subProject)">
-              删除
-            </el-button>
+            <el-button size="small" type="danger" plain @click="emit('delete', subProject)">删除</el-button>
           </div>
         </el-collapse-item>
       </el-collapse>
@@ -124,9 +128,9 @@
 </template>
 
 <script setup lang="ts">
-import { Document, Tickets, Plus, ChatLineSquare, MoreFilled } from "@element-plus/icons-vue";
-import type { SubProject, SubProjectContent, TextCommand } from "@/types";
-import ExpiryStatus from "@/components/content/ExpiryStatus.vue";
+import { Document, Tickets, Plus, ChatLineSquare, MoreFilled } from '@element-plus/icons-vue';
+import type { SubProject, SubProjectContent, TextCommand } from '@/types';
+import ExpiryStatus from '@/components/content/ExpiryStatus.vue';
 
 interface Props {
   subProjects: SubProject[];
@@ -138,22 +142,24 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: "edit", subProject: SubProject): void;
-  (e: "delete", subProject: SubProject): void;
-  (e: "add-content", subProject: SubProject): void;
-  (e: "edit-content", subProject: SubProject, content: SubProjectContent): void;
-  (e: "add-command", subProject: SubProject): void;
-  (e: "edit-command", subProject: SubProject, command: TextCommand): void;
-  (e: "delete-command", subProject: SubProject, command: TextCommand): void;
-  (e: "toggle-documentation", subProject: SubProject, enabled: boolean): void;
+  (e: 'edit', subProject: SubProject): void;
+  (e: 'delete', subProject: SubProject): void;
+  (e: 'add-content', subProject: SubProject): void;
+  (e: 'edit-content', subProject: SubProject, content: SubProjectContent): void;
+  (e: 'add-command', subProject: SubProject): void;
+  (e: 'edit-command', subProject: SubProject, command: TextCommand): void;
+  (e: 'delete-command', subProject: SubProject, command: TextCommand): void;
+  (e: 'toggle-documentation', subProject: SubProject, enabled: boolean): void;
 }>();
 
-const handleCommandAction = (
-  command: "edit" | "delete",
-  subProject: SubProject,
-  textCommand: TextCommand
-) => {
-  if (command === "edit") emit("edit-command", subProject, textCommand);
-  if (command === "delete") emit("delete-command", subProject, textCommand);
+const handleCommandAction = (command: 'edit' | 'delete', subProject: SubProject, textCommand: TextCommand) => {
+  if (command === 'edit') emit('edit-command', subProject, textCommand);
+  if (command === 'delete') emit('delete-command', subProject, textCommand);
 };
 </script>
+<style scoped>
+.description-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+</style>
