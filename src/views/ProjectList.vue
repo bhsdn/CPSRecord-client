@@ -34,7 +34,6 @@
           class="w-36"
           @clear="handleCategoryReset"
         >
-          <el-option :value="null" label="全部分类" />
           <el-option
             v-for="category in activeCategories"
             :key="category.id"

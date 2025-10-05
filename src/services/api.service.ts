@@ -39,6 +39,27 @@ import type {
 } from "@/types/documentation";
 
 /**
+ * 标准化项目数据（处理后端字段名差异）
+ */
+function normalizeProject(raw: any): any {
+  if (!raw) return raw;
+  
+  return {
+    ...raw,
+    // 字段名映射
+    isActive: raw.isActive ?? true,  // 后端未返回时默认为true
+    documentationCount: raw.documentationCount ?? raw.documentationEnabledCount ?? 0,
+  };
+}
+
+/**
+ * 标准化项目数组
+ */
+function normalizeProjects(projects: any[]): any[] {
+  return projects.map(normalizeProject);
+}
+
+/**
  * 项目API服务
  */
 export const projectService = {
@@ -57,7 +78,7 @@ export const projectService = {
     // 格式1: { data: [...], pagination: {...} }
     if (rawData.data && rawData.pagination) {
       return {
-        data: rawData.data,
+        data: normalizeProjects(rawData.data),
         pagination: rawData.pagination,
       };
     }
@@ -65,7 +86,7 @@ export const projectService = {
     // 格式2: { items: [...], total: 10, page: 1, ... }
     if (rawData.items) {
       return {
-        data: rawData.items,
+        data: normalizeProjects(rawData.items),
         pagination: {
           page: rawData.page || 1,
           limit: rawData.limit || 10,
@@ -78,7 +99,7 @@ export const projectService = {
     // 格式3: 直接是数组 [...]
     if (Array.isArray(rawData)) {
       return {
-        data: rawData,
+        data: normalizeProjects(rawData),
         pagination: {
           page: 1,
           limit: rawData.length,
@@ -96,30 +117,30 @@ export const projectService = {
    * 获取项目详情
    */
   async getDetail(id: number): Promise<Project> {
-    const response = await api.get<ApiResponse<Project>>(`/projects/${id}`);
+    const response = await api.get<ApiResponse<any>>(`/projects/${id}`);
     const data = unwrapData(response);
     if (!data) throw new Error("项目不存在");
-    return data;
+    return normalizeProject(data);
   },
 
   /**
    * 创建项目
    */
   async create(data: CreateProjectDto): Promise<Project> {
-    const response = await api.post<ApiResponse<Project>>("/projects", data);
+    const response = await api.post<ApiResponse<any>>("/projects", data);
     const result = unwrapData(response);
     if (!result) throw new Error("创建项目失败");
-    return result;
+    return normalizeProject(result);
   },
 
   /**
    * 更新项目
    */
   async update(id: number, data: UpdateProjectDto): Promise<Project> {
-    const response = await api.put<ApiResponse<Project>>(`/projects/${id}`, data);
+    const response = await api.put<ApiResponse<any>>(`/projects/${id}`, data);
     const result = unwrapData(response);
     if (!result) throw new Error("更新项目失败");
-    return result;
+    return normalizeProject(result);
   },
 
   /**

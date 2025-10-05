@@ -37,7 +37,8 @@ export const useProjectsStore = defineStore("projects", () => {
     const query = searchQuery.value.trim().toLowerCase();
     const categoryId = activeCategoryId.value;
     return projects.value.filter((project) => {
-      if (!project.isActive) return false;
+      // 修复：isActive 可能 undefined，默认视为 true（后端已过滤未激活项目）
+      if (project.isActive === false) return false;
       if (categoryId !== null && project.categoryId !== categoryId) return false;
       if (!query) return true;
       return (
