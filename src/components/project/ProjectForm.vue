@@ -4,12 +4,7 @@
       <el-input v-model="form.name" placeholder="请输入项目名称" maxlength="60" show-word-limit />
     </el-form-item>
     <el-form-item label="项目分类" prop="categoryId">
-      <el-select
-        v-model="form.categoryId"
-        placeholder="请选择分类"
-        class="w-full"
-        :disabled="!categories.length"
-      >
+      <el-select v-model="form.categoryId" placeholder="请选择分类" class="w-full" :disabled="!categories.length">
         <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
       </el-select>
     </el-form-item>
@@ -18,7 +13,7 @@
         v-model="form.description"
         type="textarea"
         :autosize="{ minRows: 3, maxRows: 6 }"
-        maxlength="200"
+        maxlength="500"
         show-word-limit
         placeholder="补充项目背景、目标等信息"
       />
@@ -33,9 +28,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
-import type { FormInstance, FormRules } from "element-plus";
-import type { Project, ProjectCategory } from "@/types";
+import { computed, reactive, ref, watch } from 'vue';
+import type { FormInstance, FormRules } from 'element-plus';
+import type { Project, ProjectCategory } from '@/types';
 
 interface Props {
   modelValue?: Partial<Project> | null;
@@ -47,22 +42,19 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: null,
   submitting: false,
-  submitText: "提交",
+  submitText: '提交',
   categories: () => [],
 });
 
 const emit = defineEmits<{
-  (
-    e: "submit",
-    value: { name: string; description?: string | null; categoryId: number }
-  ): void;
-  (e: "cancel"): void;
+  (e: 'submit', value: { name: string; description?: string | null; categoryId: number }): void;
+  (e: 'cancel'): void;
 }>();
 
 const formRef = ref<FormInstance>();
 const form = reactive({
-  name: "",
-  description: "",
+  name: '',
+  description: '',
   categoryId: undefined as number | undefined,
 });
 
@@ -70,23 +62,23 @@ const categories = computed(() => props.categories);
 
 const rules: FormRules = {
   name: [
-    { required: true, message: "请输入项目名称", trigger: "blur" },
-    { min: 2, max: 60, message: "长度在 2 到 60 个字符", trigger: "blur" },
+    { required: true, message: '请输入项目名称', trigger: 'blur' },
+    { min: 2, max: 60, message: '长度在 2 到 60 个字符', trigger: 'blur' },
   ],
-  description: [{ max: 200, message: "描述不超过 200 字", trigger: "blur" }],
-  categoryId: [{ required: true, message: "请选择项目分类", trigger: "change" }],
+  description: [{ max: 500, message: '描述不超过 500 字', trigger: 'blur' }],
+  categoryId: [{ required: true, message: '请选择项目分类', trigger: 'change' }],
 };
 
 watch(
   () => props.modelValue,
-  (value) => {
+  value => {
     if (value) {
-      form.name = value.name ?? "";
-      form.description = value.description ?? "";
+      form.name = value.name ?? '';
+      form.description = value.description ?? '';
       form.categoryId = value.categoryId ?? undefined;
     } else {
-      form.name = "";
-      form.description = "";
+      form.name = '';
+      form.description = '';
       form.categoryId = props.categories[0]?.id;
     }
   },
@@ -95,7 +87,7 @@ watch(
 
 watch(
   () => props.categories,
-  (categories) => {
+  categories => {
     if (!form.categoryId && categories.length) {
       form.categoryId = categories[0].id;
     }
@@ -105,10 +97,10 @@ watch(
 
 const handleSubmit = async () => {
   if (!formRef.value) return;
-  await formRef.value.validate((valid) => {
+  await formRef.value.validate(valid => {
     if (!valid) return;
     if (form.categoryId === undefined) return;
-    emit("submit", {
+    emit('submit', {
       name: form.name.trim(),
       description: form.description.trim(),
       categoryId: form.categoryId,
@@ -116,5 +108,5 @@ const handleSubmit = async () => {
   });
 };
 
-const handleCancel = () => emit("cancel");
+const handleCancel = () => emit('cancel');
 </script>

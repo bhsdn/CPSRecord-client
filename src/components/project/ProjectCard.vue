@@ -39,7 +39,7 @@
         </el-tag>
       </div>
       <p class="line-clamp-2 text-sm text-slate-600">
-        {{ project.description || "暂无描述" }}
+        {{ project.description || '暂无描述' }}
       </p>
       <div class="flex items-center justify-between text-xs text-slate-500">
         <span class="flex items-center gap-1">
@@ -55,13 +55,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Project } from "@/types";
-import { useDateFormat } from "@/composables/useDateFormat";
-import {
-  CollectionTag,
-  DocumentCopy,
-  MoreFilled,
-} from "@element-plus/icons-vue";
+import type { Project } from '@/types';
+import { useDateFormat } from '@/composables/useDateFormat';
+import { CollectionTag, DocumentCopy, MoreFilled } from '@element-plus/icons-vue';
 
 interface Props {
   project: Project;
@@ -70,23 +66,23 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: "click", project: Project): void;
-  (e: "edit", project: Project): void;
-  (e: "delete", project: Project): void;
+  (e: 'click', project: Project): void;
+  (e: 'edit', project: Project): void;
+  (e: 'delete', project: Project): void;
 }>();
 
 const { formatDate } = useDateFormat();
 
 const handleClick = () => {
-  emit("click", props.project);
+  emit('click', props.project);
 };
 
 const handleCommand = (command: string) => {
-  if (command === "edit") {
-    emit("edit", props.project);
+  if (command === 'edit') {
+    emit('edit', props.project);
   }
-  if (command === "delete") {
-    emit("delete", props.project);
+  if (command === 'delete') {
+    emit('delete', props.project);
   }
 };
 </script>
@@ -95,7 +91,10 @@ const handleCommand = (command: string) => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

@@ -1,30 +1,41 @@
 <template>
   <section v-if="project" class="space-y-6">
-    <el-page-header @back="router.back">
+    <el-page-header @back="router.back" class="project-detail-header">
       <template #content>
-        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
+        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div class="flex-1 min-w-0">
             <h2 class="text-2xl font-semibold text-slate-900">{{ project.name }}</h2>
-            <p class="text-sm text-slate-500">{{ project.description || "暂无描述" }}</p>
+            <div class="description-wrapper">
+              <p
+                ref="descriptionRef"
+                class="text-sm text-slate-500 description-text"
+                :class="{ 'line-clamp-2': !isDescriptionExpanded }"
+              >
+                {{ project.description || '暂无描述' }}
+              </p>
+              <button v-if="showExpandButton" class="expand-button text-xs mt-1" @click.stop="toggleDescription">
+                {{ isDescriptionExpanded ? '收起' : '展开全部' }}
+              </button>
+            </div>
             <div class="mt-2 flex flex-wrap gap-2">
               <el-tag v-if="project.category?.name" size="small" type="success">{{ project.category.name }}</el-tag>
               <el-tag v-else size="small" type="info">未分类</el-tag>
             </div>
           </div>
-          <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-            <span class="flex items-center gap-1">
+          <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 md:flex-shrink-0">
+            <span class="flex items-center gap-1 whitespace-nowrap">
               <el-icon><Timer /></el-icon>
               更新于 {{ formatDate(project.updatedAt) }}
             </span>
-            <span class="flex items-center gap-1">
+            <span class="flex items-center gap-1 whitespace-nowrap">
               <el-icon><CollectionTag /></el-icon>
               子项目 {{ subProjects.length }}
             </span>
-            <span class="flex items-center gap-1">
+            <span class="flex items-center gap-1 whitespace-nowrap">
               <el-icon><Tickets /></el-icon>
               文字口令 {{ commandTotal }}
             </span>
-            <span class="flex items-center gap-1">
+            <span class="flex items-center gap-1 whitespace-nowrap">
               <el-icon><DocumentCopy /></el-icon>
               文档 {{ project.documentationCount }}
             </span>
@@ -48,14 +59,7 @@
       </el-button>
     </el-card>
 
-    <el-alert
-      v-if="loadError"
-      type="error"
-      :closable="false"
-      show-icon
-      title="数据加载异常"
-      class="w-full"
-    >
+    <el-alert v-if="loadError" type="error" :closable="false" show-icon title="数据加载异常" class="w-full">
       <template #description>
         <div class="flex flex-col gap-2">
           <span>{{ loadError }}，请稍后重试。</span>
@@ -83,7 +87,12 @@
     <el-button type="primary" @click="router.push('/projects')">返回项目列表</el-button>
   </el-empty>
 
-  <el-dialog :title="subProjectDialogTitle" :model-value="subProjectDialogVisible" width="520px" @close="closeSubProjectDialog">
+  <el-dialog
+    :title="subProjectDialogTitle"
+    :model-value="subProjectDialogVisible"
+    width="520px"
+    @close="closeSubProjectDialog"
+  >
     <SubProjectForm
       :model-value="editingSubProject"
       :submit-text="editingSubProject ? '保存修改' : '创建子项目'"
@@ -118,14 +127,19 @@
       <div class="flex justify-end gap-3">
         <el-button @click="closeCommandDialog">取消</el-button>
         <el-button type="primary" :loading="submitting" @click="handleCommandSubmit">
-          {{ editingCommand ? "保存口令" : "新增口令" }}
+          {{ editingCommand ? '保存口令' : '新增口令' }}
         </el-button>
       </div>
     </template>
   </el-dialog>
 
   <el-dialog title="调整子项目排序" :model-value="sortDialogVisible" width="640px" @close="closeSortDialog">
-    <SubProjectSort :model-value="subProjects" :submitting="submitting" @update="handleSortUpdate" @cancel="closeSortDialog" />
+    <SubProjectSort
+      :model-value="subProjects"
+      :submitting="submitting"
+      @update="handleSortUpdate"
+      @cancel="closeSortDialog"
+    />
   </el-dialog>
 
   <ConfirmDialog
@@ -150,22 +164,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
-import { storeToRefs } from "pinia";
-import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import type { FormInstance, FormRules } from "element-plus";
-import { Timer, CollectionTag, Tickets, Plus, Rank, Setting, DocumentCopy } from "@element-plus/icons-vue";
-import { useDateFormat } from "@/composables/useDateFormat";
-import { useProjectsStore } from "@/stores/projects";
-import { useSubProjectsStore } from "@/stores/subProjects";
-import { useContentsStore } from "@/stores/contents";
-import SubProjectList from "@/components/subproject/SubProjectList.vue";
-import SubProjectForm from "@/components/subproject/SubProjectForm.vue";
-import SubProjectSort from "@/components/subproject/SubProjectSort.vue";
-import ContentEditor from "@/components/content/ContentEditor.vue";
-import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
-import type { ContentType, SubProject, SubProjectContent, TextCommand } from "@/types";
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useRoute, useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import type { FormInstance, FormRules } from 'element-plus';
+import { Timer, CollectionTag, Tickets, Plus, Rank, Setting, DocumentCopy } from '@element-plus/icons-vue';
+import { useDateFormat } from '@/composables/useDateFormat';
+import { useProjectsStore } from '@/stores/projects';
+import { useSubProjectsStore } from '@/stores/subProjects';
+import { useContentsStore } from '@/stores/contents';
+import SubProjectList from '@/components/subproject/SubProjectList.vue';
+import SubProjectForm from '@/components/subproject/SubProjectForm.vue';
+import SubProjectSort from '@/components/subproject/SubProjectSort.vue';
+import ContentEditor from '@/components/content/ContentEditor.vue';
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue';
+import type { ContentType, SubProject, SubProjectContent, TextCommand } from '@/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -179,12 +193,37 @@ const { contentTypes } = storeToRefs(contentsStore);
 const projectId = Number(route.params.id);
 const project = computed(() => projectsStore.getProjectById(projectId));
 const subProjects = computed(() => subProjectsStore.getSubProjectsByProjectId(projectId));
-const commandTotal = computed(() =>
-  subProjects.value.reduce((total, sub) => total + sub.textCommands.length, 0)
-);
+const commandTotal = computed(() => subProjects.value.reduce((total, sub) => total + sub.textCommands.length, 0));
 const subProjectLoading = ref(false);
 // 当接口请求失败时记录错误信息，便于在界面上提示
 const loadError = ref<string | null>(null);
+
+// 描述展开/收起功能
+const descriptionRef = ref<HTMLElement | null>(null);
+const isDescriptionExpanded = ref(false);
+const showExpandButton = ref(false);
+
+// 检测描述是否超过2行
+const checkDescriptionOverflow = () => {
+  if (!descriptionRef.value || !project.value?.description) {
+    showExpandButton.value = false;
+    return;
+  }
+
+  // 获取元素的实际高度和行高
+  const element = descriptionRef.value;
+  const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
+  const actualHeight = element.scrollHeight;
+  const visibleHeight = element.clientHeight;
+
+  // 如果实际高度大于可见高度，说明有内容被截断
+  showExpandButton.value = actualHeight > visibleHeight + lineHeight * 0.1;
+};
+
+// 切换描述展开/收起状态
+const toggleDescription = () => {
+  isDescriptionExpanded.value = !isDescriptionExpanded.value;
+};
 
 const dialogVisibleStates = reactive({
   subProject: false,
@@ -205,13 +244,13 @@ const deletingCommand = ref<{ subProject: SubProject; command: TextCommand } | n
 
 const commandFormRef = ref<FormInstance>();
 const commandForm = reactive({
-  commandText: "",
+  commandText: '',
   expiryDays: 7,
 });
 
 const commandRules: FormRules = {
-  commandText: [{ required: true, message: "请输入口令内容", trigger: "blur" }],
-  expiryDays: [{ required: true, message: "请输入有效天数", trigger: "change" }],
+  commandText: [{ required: true, message: '请输入口令内容', trigger: 'blur' }],
+  expiryDays: [{ required: true, message: '请输入有效天数', trigger: 'change' }],
 };
 
 const subProjectDialogVisible = computed({
@@ -239,13 +278,9 @@ const deleteCommandDialogVisible = computed({
   set: (value: boolean) => (dialogVisibleStates.deleteCommand = value),
 });
 
-const subProjectDialogTitle = computed(() =>
-  editingSubProject.value ? "编辑子项目" : "新建子项目"
-);
+const subProjectDialogTitle = computed(() => (editingSubProject.value ? '编辑子项目' : '新建子项目'));
 
-const contentDialogTitle = computed(() =>
-  `${editingContent.value ? "编辑" : "新增"}内容`
-);
+const contentDialogTitle = computed(() => `${editingContent.value ? '编辑' : '新增'}内容`);
 
 // 页面初始化时同时拉取项目、子项目与内容类型数据
 const fetchDetail = async () => {
@@ -257,8 +292,11 @@ const fetchDetail = async () => {
       subProjectsStore.fetchSubProjectsByProject(projectId),
       contentsStore.fetchContentTypes(),
     ]);
+    // 数据加载完成后检测描述文本是否溢出
+    await nextTick();
+    checkDescriptionOverflow();
   } catch (error) {
-    const message = error instanceof Error ? error.message : "加载项目详情失败";
+    const message = error instanceof Error ? error.message : '加载项目详情失败';
     loadError.value = message;
     ElMessage.error(message);
   } finally {
@@ -286,14 +324,14 @@ const handleSubProjectSubmit = async (payload: {
   try {
     if (editingSubProject.value) {
       await subProjectsStore.updateSubProject(editingSubProject.value.id, payload);
-      ElMessage.success("子项目更新成功");
+      ElMessage.success('子项目更新成功');
     } else {
       await subProjectsStore.createSubProject({ projectId, ...payload });
-      ElMessage.success("子项目创建成功");
+      ElMessage.success('子项目创建成功');
     }
     closeSubProjectDialog();
   } catch (error) {
-    ElMessage.error("子项目操作失败");
+    ElMessage.error('子项目操作失败');
   } finally {
     submitting.value = false;
   }
@@ -302,10 +340,10 @@ const handleSubProjectSubmit = async (payload: {
 const handleToggleDocumentation = async (subProject: SubProject, enabled: boolean) => {
   try {
     await subProjectsStore.updateSubProject(subProject.id, { documentationEnabled: enabled });
-    ElMessage.success(enabled ? "已开启文档生成" : "已关闭文档生成");
+    ElMessage.success(enabled ? '已开启文档生成' : '已关闭文档生成');
   } catch (error) {
     subProject.documentationEnabled = !enabled;
-    ElMessage.error("更新文档开关失败");
+    ElMessage.error('更新文档开关失败');
   }
 };
 
@@ -319,9 +357,9 @@ const handleSubProjectDelete = async () => {
   submitting.value = true;
   try {
     await subProjectsStore.deleteSubProject(deletingSubProject.value.id);
-    ElMessage.success("子项目已删除");
+    ElMessage.success('子项目已删除');
   } catch (error) {
-    ElMessage.error("删除子项目失败");
+    ElMessage.error('删除子项目失败');
   } finally {
     submitting.value = false;
     deleteSubProjectDialogVisible.value = false;
@@ -341,24 +379,20 @@ const closeContentDialog = () => {
   editingContent.value = null;
 };
 
-const handleContentSubmit = async (payload: {
-  contentTypeId: number;
-  contentValue: string;
-  expiryDays?: number;
-}) => {
+const handleContentSubmit = async (payload: { contentTypeId: number; contentValue: string; expiryDays?: number }) => {
   if (!targetSubProject.value) return;
   submitting.value = true;
   try {
     if (editingContent.value) {
       await contentsStore.updateContent(targetSubProject.value.id, editingContent.value.id, payload);
-      ElMessage.success("内容更新成功");
+      ElMessage.success('内容更新成功');
     } else {
       await contentsStore.addContent(targetSubProject.value.id, payload);
-      ElMessage.success("内容新增成功");
+      ElMessage.success('内容新增成功');
     }
     closeContentDialog();
   } catch (error) {
-    ElMessage.error("内容操作失败");
+    ElMessage.error('内容操作失败');
   } finally {
     submitting.value = false;
   }
@@ -367,7 +401,7 @@ const handleContentSubmit = async (payload: {
 const openCommandDialog = (subProject: SubProject, command?: TextCommand) => {
   targetSubProject.value = subProject;
   editingCommand.value = command ?? null;
-  commandForm.commandText = command?.commandText ?? "";
+  commandForm.commandText = command?.commandText ?? '';
   commandForm.expiryDays = command?.expiryDays ?? 7;
   commandDialogVisible.value = true;
 };
@@ -376,13 +410,13 @@ const closeCommandDialog = () => {
   commandDialogVisible.value = false;
   targetSubProject.value = null;
   editingCommand.value = null;
-  commandForm.commandText = "";
+  commandForm.commandText = '';
   commandForm.expiryDays = 7;
 };
 
 const handleCommandSubmit = async () => {
   if (!commandFormRef.value || !targetSubProject.value) return;
-  await commandFormRef.value.validate(async (valid) => {
+  await commandFormRef.value.validate(async valid => {
     if (!valid) return;
     submitting.value = true;
     try {
@@ -391,17 +425,17 @@ const handleCommandSubmit = async () => {
           commandText: commandForm.commandText,
           expiryDays: commandForm.expiryDays,
         });
-        ElMessage.success("口令更新成功");
+        ElMessage.success('口令更新成功');
       } else {
         await contentsStore.addTextCommand(targetSubProject.value.id, {
           commandText: commandForm.commandText,
           expiryDays: commandForm.expiryDays,
         });
-        ElMessage.success("口令新增成功");
+        ElMessage.success('口令新增成功');
       }
       closeCommandDialog();
     } catch (error) {
-      ElMessage.error("口令操作失败");
+      ElMessage.error('口令操作失败');
     } finally {
       submitting.value = false;
     }
@@ -417,13 +451,10 @@ const handleCommandDelete = async () => {
   if (!deletingCommand.value) return;
   submitting.value = true;
   try {
-    await contentsStore.removeTextCommand(
-      deletingCommand.value.subProject.id,
-      deletingCommand.value.command.id
-    );
-    ElMessage.success("口令已删除");
+    await contentsStore.removeTextCommand(deletingCommand.value.subProject.id, deletingCommand.value.command.id);
+    ElMessage.success('口令已删除');
   } catch (error) {
-    ElMessage.error("删除口令失败");
+    ElMessage.error('删除口令失败');
   } finally {
     submitting.value = false;
     deleteCommandDialogVisible.value = false;
@@ -443,18 +474,90 @@ const handleSortUpdate = async (ids: number[]) => {
   submitting.value = true;
   try {
     await subProjectsStore.reorderSubProjects(projectId, ids);
-    ElMessage.success("排序已更新");
+    ElMessage.success('排序已更新');
     closeSortDialog();
   } catch (error) {
-    ElMessage.error("更新排序失败");
+    ElMessage.error('更新排序失败');
   } finally {
     submitting.value = false;
   }
 };
 
 const openContentTypePage = () => {
-  router.push({ name: "ContentManagement" });
+  router.push({ name: 'ContentManagement' });
 };
 
-onMounted(fetchDetail);
+// 监听项目描述变化，重新检测溢出
+watch(
+  () => project.value?.description,
+  async () => {
+    isDescriptionExpanded.value = false;
+    await nextTick();
+    checkDescriptionOverflow();
+  }
+);
+
+// 监听窗口大小变化，重新检测溢出
+const handleResize = () => {
+  checkDescriptionOverflow();
+};
+
+onMounted(() => {
+  fetchDetail();
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
 </script>
+
+<style scoped>
+/* 保留换行符显示 */
+.description-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+
+/* 修复 el-page-header 返回按钮与内容的对齐 */
+.project-detail-header :deep(.el-page-header__header) {
+  align-items: flex-start !important;
+}
+
+.project-detail-header :deep(.el-page-header__left) {
+  padding-top: 0.25rem;
+}
+
+.project-detail-header :deep(.el-page-header__content) {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 描述展开按钮样式 */
+.expand-button {
+  color: var(--el-color-primary);
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.expand-button:hover {
+  color: var(--el-color-primary-light-3);
+}
+
+.expand-button:active {
+  color: var(--el-color-primary-dark-2);
+}
+</style>
