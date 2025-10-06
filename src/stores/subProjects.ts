@@ -233,7 +233,7 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   // 新增内容条目，依赖服务端计算到期状态
   const addContentToSubProject = async (
     subProjectId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number }
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
   ) => {
     const response = await api.post<ApiResponse<RawSubProjectContent>>("/contents", {
       subProjectId,
@@ -259,7 +259,7 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   const updateContentInSubProject = async (
     subProjectId: number,
     contentId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number }
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
   ) => {
     const response = await api.put<ApiResponse<RawSubProjectContent>>(`/contents/${contentId}`, {
       subProjectId,

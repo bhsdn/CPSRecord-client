@@ -60,6 +60,9 @@ export function useImageUpload() {
     uploadProgress.value = 0;
 
     try {
+      // 先获取图片尺寸
+      const dimensions = await getImageDimensions(file);
+
       // 构建 FormData
       const formData = new FormData();
       formData.append('file', file);
@@ -103,7 +106,7 @@ export function useImageUpload() {
 
       const picuiData = response.data.data;
 
-      // 将图片信息保存到后端数据库
+      // 将图片信息保存到后端数据库（包含本地读取的宽高）
       try {
         const saveResponse = await api.post<ApiResponse<UploadedImage>>('/uploaded-images', {
           key: picuiData.key,
@@ -111,8 +114,8 @@ export function useImageUpload() {
           pathname: picuiData.pathname,
           originName: picuiData.origin_name,
           size: picuiData.size,
-          width: picuiData.width,
-          height: picuiData.height,
+          width: dimensions.width,      // 使用本地读取的宽度
+          height: dimensions.height,    // 使用本地读取的高度
           mimetype: picuiData.mimetype,
           extension: picuiData.extension,
           md5: picuiData.md5,

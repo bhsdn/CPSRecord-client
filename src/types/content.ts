@@ -14,6 +14,19 @@ export interface SubProjectContent {
   subProjectId: number;
   contentType: ContentType;
   contentValue: string;
+  uploadedImageId?: number;
+  uploadedImage?: {
+    id: number;
+    key: string;
+    name: string;
+    width?: number;
+    height?: number;
+    size: number;
+    links: {
+      url: string;
+      thumbnail_url: string;
+    };
+  };
   expiryDays?: number;
   expiryDate?: string;
   expiryStatus?: "safe" | "warning" | "danger";

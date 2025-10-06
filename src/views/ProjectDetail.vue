@@ -379,7 +379,12 @@ const closeContentDialog = () => {
   editingContent.value = null;
 };
 
-const handleContentSubmit = async (payload: { contentTypeId: number; contentValue: string; expiryDays?: number }) => {
+const handleContentSubmit = async (payload: {
+  contentTypeId: number;
+  contentValue: string;
+  expiryDays?: number;
+  uploadedImageId?: number;
+}) => {
   if (!targetSubProject.value) return;
   submitting.value = true;
   try {

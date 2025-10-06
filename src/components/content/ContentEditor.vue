@@ -102,7 +102,10 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'submit', payload: { contentTypeId: number; contentValue: string; expiryDays?: number }): void;
+  (
+    e: 'submit',
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
+  ): void;
   (e: 'cancel'): void;
 }>();
 
@@ -113,9 +116,10 @@ const formData = ref({
   expiryDays: undefined as number | undefined,
 });
 
-const { uploading: imageUploading, uploadProgress, uploadImage, validateImage, getImageDimensions } = useImageUpload();
+const { uploading: imageUploading, uploadProgress, uploadImage, validateImage } = useImageUpload();
 const imagePreview = ref('');
 const imageInfo = ref<{
+  id?: number;
   url: string;
   width?: number;
   height?: number;
@@ -215,17 +219,15 @@ const handleImageChange = async (uploadFile: UploadFile) => {
   if (!uploadFile.raw) return;
 
   try {
-    // 获取图片尺寸
-    const dimensions = await getImageDimensions(uploadFile.raw);
-
-    // 上传到图床（使用默认配置：公开，相册 1761）
+    // 上传到图床（内部会自动获取宽高并保存到服务端）
     const uploadedImage = await uploadImage(uploadFile.raw);
 
-    // 保存图片信息（包含本地读取的宽高）
+    // 保存图片信息
     imageInfo.value = {
+      id: uploadedImage.id, // 服务端返回的 ID
       url: uploadedImage.links.url,
-      width: dimensions.width,
-      height: dimensions.height,
+      width: uploadedImage.width,
+      height: uploadedImage.height,
       size: uploadedImage.size,
       name: uploadedImage.name,
       md5: uploadedImage.md5,
@@ -254,11 +256,24 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate();
     if (!formData.value.contentTypeId) return;
-    emit('submit', {
+
+    const payload: {
+      contentTypeId: number;
+      contentValue: string;
+      expiryDays?: number;
+      uploadedImageId?: number;
+    } = {
       contentTypeId: formData.value.contentTypeId,
       contentValue: formData.value.contentValue.trim(),
       expiryDays: formData.value.expiryDays,
-    });
+    };
+
+    // 如果是图片类型且有图片ID，添加 uploadedImageId
+    if (selectedContentType.value?.fieldType === 'image' && imageInfo.value?.id) {
+      payload.uploadedImageId = imageInfo.value.id;
+    }
+
+    emit('submit', payload);
   } catch (error) {
     // ignore validation error
   }

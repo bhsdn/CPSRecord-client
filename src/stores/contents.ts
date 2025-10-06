@@ -86,7 +86,7 @@ export const useContentsStore = defineStore("contents", () => {
   // 内容相关操作直接委托给子项目仓库，保持数据一致性
   const addContent = async (
     subProjectId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number }
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
   ) => {
     const subProjectsStore = useSubProjectsStore();
     return subProjectsStore.addContentToSubProject(subProjectId, payload);
@@ -95,7 +95,7 @@ export const useContentsStore = defineStore("contents", () => {
   const updateContent = async (
     subProjectId: number,
     contentId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number }
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
   ) => {
     const subProjectsStore = useSubProjectsStore();
     return subProjectsStore.updateContentInSubProject(subProjectId, contentId, payload);
