@@ -2246,6 +2246,189 @@
           "文档中心"
         ]
       }
+    },
+    "/uploaded-images": {
+      "post": {
+        "operationId": "UploadedImagesController_create",
+        "summary": "保存上传的图片信息",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadedImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "保存成功"
+          },
+          "400": {
+            "description": "参数错误"
+          }
+        },
+        "tags": [
+          "上传图片管理"
+        ]
+      },
+      "get": {
+        "operationId": "UploadedImagesController_findAll",
+        "summary": "查询图片列表",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "搜索关键字",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "required": false,
+            "in": "query",
+            "description": "项目 ID，用于统计项目容量",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功"
+          }
+        },
+        "tags": [
+          "上传图片管理"
+        ]
+      }
+    },
+    "/uploaded-images/project/{projectId}/capacity": {
+      "get": {
+        "operationId": "UploadedImagesController_getProjectCapacity",
+        "summary": "统计项目图片容量",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "description": "项目 ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "统计成功"
+          },
+          "404": {
+            "description": "项目不存在"
+          }
+        },
+        "tags": [
+          "上传图片管理"
+        ]
+      }
+    },
+    "/uploaded-images/{id}": {
+      "get": {
+        "operationId": "UploadedImagesController_findOne",
+        "summary": "获取图片详情",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "图片 ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功"
+          },
+          "404": {
+            "description": "图片不存在"
+          }
+        },
+        "tags": [
+          "上传图片管理"
+        ]
+      },
+      "delete": {
+        "operationId": "UploadedImagesController_remove",
+        "summary": "物理删除图片（同时删除 PICUI 上的图片）",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "图片 ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          },
+          "400": {
+            "description": "图片正在使用中，无法删除"
+          },
+          "404": {
+            "description": "图片不存在"
+          }
+        },
+        "tags": [
+          "上传图片管理"
+        ]
+      }
+    },
+    "/uploaded-images/clean-unused": {
+      "post": {
+        "operationId": "UploadedImagesController_cleanUnused",
+        "summary": "批量清理未使用的图片",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "清理成功"
+          }
+        },
+        "tags": [
+          "上传图片管理"
+        ]
+      }
     }
   },
   "info": {
@@ -2619,6 +2802,81 @@
             "default": true
           }
         }
+      },
+      "CreateUploadedImageDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "PICUI 图片唯一密钥"
+          },
+          "name": {
+            "type": "string",
+            "description": "图片名称"
+          },
+          "pathname": {
+            "type": "string",
+            "description": "图片路径"
+          },
+          "originName": {
+            "type": "string",
+            "description": "原始文件名"
+          },
+          "size": {
+            "type": "number",
+            "description": "图片大小（KB）"
+          },
+          "width": {
+            "type": "number",
+            "description": "图片宽度"
+          },
+          "height": {
+            "type": "number",
+            "description": "图片高度"
+          },
+          "mimetype": {
+            "type": "string",
+            "description": "MIME 类型"
+          },
+          "extension": {
+            "type": "string",
+            "description": "文件扩展名"
+          },
+          "md5": {
+            "type": "string",
+            "description": "MD5 值"
+          },
+          "sha1": {
+            "type": "string",
+            "description": "SHA1 值"
+          },
+          "links": {
+            "type": "object",
+            "description": "链接信息对象"
+          },
+          "albumId": {
+            "type": "number",
+            "description": "PICUI 相册 ID"
+          },
+          "permission": {
+            "type": "number",
+            "description": "权限：1=公开，0=私有",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "pathname",
+          "originName",
+          "size",
+          "mimetype",
+          "extension",
+          "md5",
+          "sha1",
+          "links"
+        ]
       }
     }
   }
