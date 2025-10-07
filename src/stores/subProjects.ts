@@ -16,6 +16,8 @@ type RawSubProjectContent = SubProjectContent & {
   sub_project_id?: number;
   content_type?: RawContentType;
   content_value?: string;
+  uploaded_image_id?: number;
+  uploaded_image?: any;
   expiry_days?: number;
   expiry_date?: string;
   created_at?: string;
@@ -56,11 +58,28 @@ const normalizeContentType = (raw?: Partial<RawContentType>): ContentType => ({
 
 const normalizeContent = (raw: Partial<RawSubProjectContent>): SubProjectContent => {
   const expiryDate = raw.expiryDate ?? raw.expiry_date;
+  const uploadedImage = raw.uploadedImage ?? raw.uploaded_image;
+  
   return {
     id: Number(raw.id),
     subProjectId: raw.subProjectId ?? raw.sub_project_id ?? 0,
     contentType: normalizeContentType(raw.contentType ?? raw.content_type),
     contentValue: raw.contentValue ?? raw.content_value ?? "",
+    uploadedImageId: raw.uploadedImageId ?? raw.uploaded_image_id,
+    uploadedImage: uploadedImage
+      ? {
+          id: uploadedImage.id,
+          key: uploadedImage.key,
+          name: uploadedImage.name,
+          width: uploadedImage.width,
+          height: uploadedImage.height,
+          size: uploadedImage.size,
+          links: uploadedImage.links || {
+            url: uploadedImage.url || '',
+            thumbnail_url: uploadedImage.thumbnailUrl || uploadedImage.thumbnail_url || '',
+          },
+        }
+      : undefined,
     expiryDays: raw.expiryDays ?? raw.expiry_days,
     expiryDate,
     expiryStatus: raw.expiryStatus ?? getExpiryStatus(expiryDate ?? undefined),

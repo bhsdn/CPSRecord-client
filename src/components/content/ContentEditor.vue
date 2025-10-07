@@ -40,13 +40,7 @@
             </div>
             <el-progress v-if="imageUploading" :percentage="uploadProgress" :stroke-width="6" class="mt-4 px-4" />
             <div v-if="imagePreview" class="flex items-center justify-center w-full p-4 bg-slate-50 rounded">
-              <el-image
-                :src="imagePreview"
-                :style="imagePreviewStyle"
-                fit="fill"
-                class="rounded shadow-sm"
-                :preview-src-list="[imagePreview]"
-              />
+              <el-image :src="imagePreview" :style="imagePreviewStyle" fit="fill" class="rounded shadow-sm" />
             </div>
           </el-upload>
           <div v-if="imageInfo && !imageUploading" class="mt-2 space-y-2">
@@ -182,14 +176,29 @@ watch(
         contentValue: value.contentValue,
         expiryDays: value.expiryDays,
       };
-      // 如果是图片类型，设置预览
+      // 如果是图片类型，设置预览和图片信息
       if (value.contentType.fieldType === 'image' && value.contentValue) {
         imagePreview.value = value.contentValue;
-        imageInfo.value = {
-          url: value.contentValue,
-          size: 0,
-          name: '已上传图片',
-        };
+
+        // 如果有关联的 uploadedImage 信息，使用完整数据
+        if (value.uploadedImage) {
+          imageInfo.value = {
+            id: value.uploadedImage.id,
+            url: value.contentValue,
+            width: value.uploadedImage.width,
+            height: value.uploadedImage.height,
+            size: value.uploadedImage.size,
+            name: value.uploadedImage.name,
+            key: value.uploadedImage.key,
+          };
+        } else {
+          // 兼容旧数据（没有 uploadedImage 关联）
+          imageInfo.value = {
+            url: value.contentValue,
+            size: 0,
+            name: '已上传图片',
+          };
+        }
       }
     } else {
       formData.value = {

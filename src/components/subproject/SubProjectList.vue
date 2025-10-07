@@ -64,9 +64,9 @@
                 <div
                   v-for="content in subProject.contents"
                   :key="content.id"
-                  class="rounded-lg border border-slate-200 p-3"
+                  class="rounded-lg border border-slate-200 p-3 hover:border-primary-200 transition-colors"
                 >
-                  <div class="flex items-center justify-between text-sm">
+                  <div class="flex items-center justify-between text-sm mb-2">
                     <div class="flex items-center gap-2">
                       <el-tag size="small" effect="dark">{{ content.contentType.name }}</el-tag>
                       <ExpiryStatus v-if="content.expiryDate" :expiry-date="content.expiryDate" size="small" />
@@ -75,7 +75,38 @@
                       编辑
                     </el-button>
                   </div>
-                  <p class="mt-2 break-words text-sm text-slate-600 description-text">{{ content.contentValue }}</p>
+
+                  <!-- 图片类型：显示预览图 -->
+                  <div v-if="content.contentType.fieldType === 'image'" class="space-y-2">
+                    <div class="flex items-center justify-center w-full bg-slate-50 rounded p-3">
+                      <el-image
+                        :src="content.contentValue"
+                        :style="getImagePreviewStyle(content)"
+                        fit="fill"
+                        class="rounded shadow-sm cursor-pointer"
+                        :preview-src-list="[content.contentValue]"
+                        lazy
+                      >
+                        <template #error>
+                          <div class="flex items-center justify-center h-32 text-slate-400">
+                            <span class="text-sm">图片加载失败</span>
+                          </div>
+                        </template>
+                      </el-image>
+                    </div>
+                    <div v-if="content.uploadedImage" class="flex items-center gap-2 text-xs text-slate-400">
+                      <span v-if="content.uploadedImage.width && content.uploadedImage.height">
+                        {{ content.uploadedImage.width }} × {{ content.uploadedImage.height }}
+                      </span>
+                      <span>{{ content.uploadedImage.size.toFixed(2) }} KB</span>
+                    </div>
+                    <p class="text-xs text-slate-400 truncate">{{ content.contentValue }}</p>
+                  </div>
+
+                  <!-- 其他类型：显示文本内容 -->
+                  <p v-else class="break-words text-sm text-slate-600 description-text">
+                    {{ content.contentValue }}
+                  </p>
                 </div>
               </div>
             </el-card>
@@ -155,6 +186,35 @@ const emit = defineEmits<{
 const handleCommandAction = (command: 'edit' | 'delete', subProject: SubProject, textCommand: TextCommand) => {
   if (command === 'edit') emit('edit-command', subProject, textCommand);
   if (command === 'delete') emit('delete-command', subProject, textCommand);
+};
+
+// 根据图片宽高计算预览尺寸，等比例缩放
+const getImagePreviewStyle = (content: SubProjectContent) => {
+  if (!content.uploadedImage?.width || !content.uploadedImage?.height) {
+    return { maxWidth: '100%', maxHeight: '400px' };
+  }
+
+  const maxWidth = 500; // 最大显示宽度
+  const maxHeight = 400; // 最大显示高度
+  const { width, height } = content.uploadedImage;
+  const aspectRatio = width / height;
+
+  // 根据宽高比计算实际显示尺寸
+  if (aspectRatio > maxWidth / maxHeight) {
+    // 宽度较大，以宽度为准
+    const displayWidth = Math.min(width, maxWidth);
+    return {
+      width: `${displayWidth}px`,
+      height: `${displayWidth / aspectRatio}px`,
+    };
+  } else {
+    // 高度较大，以高度为准
+    const displayHeight = Math.min(height, maxHeight);
+    return {
+      width: `${displayHeight * aspectRatio}px`,
+      height: `${displayHeight}px`,
+    };
+  }
 };
 </script>
 <style scoped>

@@ -2653,6 +2653,11 @@
             "description": "内容值",
             "example": "https://example.com/image.jpg"
           },
+          "uploadedImageId": {
+            "type": "number",
+            "description": "上传图片ID（图片类型内容关联）",
+            "example": 1
+          },
           "expiryDays": {
             "type": "number",
             "description": "有效天数",
@@ -2682,6 +2687,11 @@
             "type": "string",
             "description": "内容值",
             "example": "https://example.com/image.jpg"
+          },
+          "uploadedImageId": {
+            "type": "number",
+            "description": "上传图片ID（图片类型内容关联）",
+            "example": 1
           },
           "expiryDays": {
             "type": "number",
