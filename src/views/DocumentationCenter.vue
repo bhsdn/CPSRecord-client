@@ -10,9 +10,7 @@
             </el-icon>
             <div>
               <h2 class="text-2xl font-bold text-slate-900">文档中心</h2>
-              <p class="text-sm text-slate-500 mt-1">
-                实时展示已开启文档的子项目内容，快速查阅推广素材
-              </p>
+              <p class="text-sm text-slate-500 mt-1">概览管理已开启文档的子项目，支持批量操作</p>
             </div>
           </div>
         </div>
@@ -50,15 +48,43 @@
 
       <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div class="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
-          <el-select v-model="filters.categoryId" placeholder="选择主项目分类" clearable class="w-full lg:w-48" @change="handleCategoryChange">
+          <el-select
+            v-model="filters.categoryId"
+            placeholder="选择主项目分类"
+            clearable
+            class="w-full lg:w-48"
+            @change="handleCategoryChange"
+          >
             <el-option :value="null" label="全部分类" />
-            <el-option v-for="category in activeCategories" :key="category.id" :label="category.name" :value="category.id" />
+            <el-option
+              v-for="category in activeCategories"
+              :key="category.id"
+              :label="category.name"
+              :value="category.id"
+            />
           </el-select>
-          <el-select v-model="filters.projectId" placeholder="选择主项目" clearable class="w-full lg:w-52" @change="handleProjectChange">
+          <el-select
+            v-model="filters.projectId"
+            placeholder="选择主项目"
+            clearable
+            class="w-full lg:w-52"
+            @change="handleProjectChange"
+          >
             <el-option :value="null" label="全部项目" />
-            <el-option v-for="project in filteredProjects" :key="project.id" :label="project.name" :value="project.id" />
+            <el-option
+              v-for="project in filteredProjects"
+              :key="project.id"
+              :label="project.name"
+              :value="project.id"
+            />
           </el-select>
-          <el-input v-model="filters.keyword" placeholder="搜索子项目或内容关键字" clearable class="w-full lg:flex-1" @keyup.enter="handleSearch">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索子项目名称"
+            clearable
+            class="w-full lg:flex-1"
+            @keyup.enter="handleSearch"
+          >
             <template #prefix>
               <el-icon>
                 <Search />
@@ -84,6 +110,30 @@
       </div>
     </el-card>
 
+    <!-- 批量操作栏 -->
+    <el-card v-if="entries.length" shadow="never" class="batch-operations-card">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+          <el-checkbox v-model="selectAll" :indeterminate="isIndeterminate" @change="handleSelectAll">全选</el-checkbox>
+          <span class="text-sm text-slate-500">已选择 {{ selectedEntries.length }} / {{ entries.length }} 个文档</span>
+        </div>
+        <div class="flex gap-2">
+          <el-button
+            :disabled="!selectedEntries.length"
+            :loading="batchDisabling"
+            type="warning"
+            size="small"
+            @click="handleBatchDisableDocumentation"
+          >
+            <el-icon class="mr-1">
+              <Close />
+            </el-icon>
+            批量关闭文档 ({{ selectedEntries.length }})
+          </el-button>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 加载状态 -->
     <LoadingSpinner v-if="loading" text="正在加载文档..." />
 
@@ -98,9 +148,7 @@
         <template #description>
           <div class="space-y-2">
             <p class="text-base font-medium text-slate-600">暂无文档内容</p>
-            <p class="text-sm text-slate-400">
-              还没有子项目开启文档生成功能
-            </p>
+            <p class="text-sm text-slate-400">还没有子项目开启文档生成功能</p>
             <el-button type="primary" size="small" class="mt-3" @click="goToProjects">
               <el-icon class="mr-1">
                 <Plus />
@@ -112,119 +160,95 @@
       </el-empty>
     </template>
 
-    <!-- 文档内容 - 三级结构展示 -->
-    <div v-else class="documentation-list space-y-6">
-      <!-- 分类级别 -->
-      <div v-for="category in groupedEntries" :key="category.categoryId" class="category-section">
-        <div class="category-header mb-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="category-icon">
-                <el-icon :size="20" class="text-blue-600">
+    <!-- 文档概览 - 卡片网格布局 -->
+    <div v-else class="documentation-overview">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <el-card
+          v-for="entry in entries"
+          :key="entry.id"
+          shadow="hover"
+          class="documentation-card"
+          :class="{ selected: selectedEntries.includes(entry.id) }"
+        >
+          <template #header>
+            <div class="flex items-center justify-between">
+              <el-checkbox
+                :model-value="selectedEntries.includes(entry.id)"
+                @change="(checked: boolean) => handleSelectEntry(entry.id, checked)"
+              />
+              <el-tag type="success" size="small" effect="plain">文档已启用</el-tag>
+            </div>
+          </template>
+
+          <div class="space-y-3">
+            <!-- 子项目名称 -->
+            <div>
+              <h4 class="text-lg font-semibold text-slate-800 mb-1 line-clamp-2">
+                {{ entry.subProjectName }}
+              </h4>
+              <div class="flex items-center gap-1 text-xs text-slate-500">
+                <el-icon class="text-blue-500">
                   <Folder />
                 </el-icon>
-              </div>
-              <div>
-                <h3 class="text-lg font-bold text-slate-800">
-                  {{ category.categoryName }}
-                </h3>
-                <p class="text-xs text-slate-500 mt-0.5">
-                  {{ category.projects.length }} 个项目 ·
-                  {{ category.projects.reduce((total, item) => total + item.entries.length, 0) }} 篇文档
-                </p>
+                <span>{{ entry.categoryName }}</span>
+                <el-divider direction="vertical" />
+                <el-icon class="text-green-500">
+                  <Collection />
+                </el-icon>
+                <span>{{ entry.projectName }}</span>
               </div>
             </div>
-            <el-tag type="info" size="small">{{ category.categoryName }}</el-tag>
+
+            <!-- 文档信息 -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">内容数量：</span>
+                <span class="font-medium text-slate-800">{{ Object.keys(entry.snapshot).length }} 项</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">生成时间：</span>
+                <span class="font-medium text-slate-800">{{ formatDate(entry.generatedAt) }}</span>
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex gap-2 pt-2 border-t border-slate-100">
+              <el-button
+                type="primary"
+                size="small"
+                text
+                @click="handleViewProject(entry.projectId, entry.subProjectId)"
+              >
+                <el-icon class="mr-1">
+                  <View />
+                </el-icon>
+                查看详情
+              </el-button>
+              <el-button
+                type="warning"
+                size="small"
+                text
+                :loading="disablingEntries.includes(entry.id)"
+                @click="handleDisableDocumentation(entry)"
+              >
+                <el-icon class="mr-1">
+                  <Close />
+                </el-icon>
+                关闭文档
+              </el-button>
+            </div>
           </div>
-        </div>
-
-        <!-- 项目级别 -->
-        <div class="projects-container space-y-4 ml-6">
-          <el-card v-for="project in category.projects" :key="project.projectId" shadow="hover" class="project-card">
-            <template #header>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <el-icon class="text-green-600">
-                    <Collection />
-                  </el-icon>
-                  <span class="text-base font-semibold text-slate-800">
-                    {{ project.projectName }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <el-tag type="primary" size="small">
-                    {{ project.entries.length }} 个子项目
-                  </el-tag>
-                </div>
-              </div>
-            </template>
-
-            <!-- 子项目级别 -->
-            <div class="subprojects-container space-y-4">
-              <div v-for="entry in project.entries" :key="entry.id" class="subproject-item">
-                <div class="subproject-header">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="flex-1">
-                      <div class="flex items-center gap-2 mb-2">
-                        <el-icon class="text-purple-600">
-                          <Document />
-                        </el-icon>
-                        <h4 class="text-base font-semibold text-slate-800">
-                          {{ entry.subProjectName }}
-                        </h4>
-                        <el-tag type="success" size="small" effect="plain">
-                          文档已生成
-                        </el-tag>
-                      </div>
-                      <div class="flex items-center gap-3 text-xs text-slate-500">
-                        <span class="flex items-center gap-1">
-                          <el-icon>
-                            <Clock />
-                          </el-icon>
-                          生成于 {{ formatDate(entry.generatedAt) }}
-                        </span>
-                        <el-divider direction="vertical" />
-                        <span>{{ Object.keys(entry.snapshot).length }} 项内容</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 快照内容展示 -->
-                <div v-if="Object.keys(entry.snapshot).length" class="snapshot-content mt-4">
-                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <div v-for="(value, key) in entry.snapshot" :key="key" class="snapshot-item">
-                      <div class="flex items-start gap-2">
-                        <el-icon class="text-blue-500 mt-1">
-                          <Files />
-                        </el-icon>
-                        <div class="flex-1 min-w-0">
-                          <div class="text-xs font-medium text-slate-600 mb-1">
-                            {{ key }}
-                          </div>
-                          <div class="text-sm text-slate-800 break-all">
-                            {{ formatSnapshotValue(value) }}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <el-empty v-else description="该子项目暂无内容" :image-size="60" class="py-4" />
-              </div>
-            </div>
-          </el-card>
-        </div>
+        </el-card>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import { storeToRefs } from "pinia";
-import { ElMessage } from "element-plus";
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   Collection,
   Document,
@@ -234,14 +258,16 @@ import {
   Search,
   Timer,
   Plus,
-  Clock,
-  Files,
-} from "@element-plus/icons-vue";
-import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
-import { useDocumentation } from "@/composables/useDocumentation";
-import { useDateFormat } from "@/composables/useDateFormat";
-import { useProjectCategoriesStore } from "@/stores/projectCategories";
-import { useProjectsStore } from "@/stores/projects";
+  Close,
+  View,
+} from '@element-plus/icons-vue';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import { useDocumentation } from '@/composables/useDocumentation';
+import { useDateFormat } from '@/composables/useDateFormat';
+import { useProjectCategoriesStore } from '@/stores/projectCategories';
+import { useProjectsStore } from '@/stores/projects';
+import { useSubProjectsStore } from '@/stores/subProjects';
+import type { DocumentationEntry } from '@/types';
 
 const router = useRouter();
 
@@ -249,6 +275,7 @@ const { formatDate } = useDateFormat();
 const documentation = useDocumentation();
 const projectCategoriesStore = useProjectCategoriesStore();
 const projectsStore = useProjectsStore();
+const subProjectsStore = useSubProjectsStore();
 
 const {
   entries,
@@ -268,13 +295,34 @@ const filters = reactive<{
 }>({
   categoryId: null,
   projectId: null,
-  keyword: "",
+  keyword: '',
 });
 
 const regenerating = ref(false);
 
+// 批量选择状态
+const selectedEntries = ref<number[]>([]);
+const batchDisabling = ref(false);
+const disablingEntries = ref<number[]>([]);
+
+// 全选状态
+const selectAll = computed({
+  get: () => selectedEntries.value.length === entries.value.length && entries.value.length > 0,
+  set: (value: boolean) => {
+    if (value) {
+      selectedEntries.value = entries.value.map(entry => entry.id);
+    } else {
+      selectedEntries.value = [];
+    }
+  },
+});
+
+const isIndeterminate = computed(
+  () => selectedEntries.value.length > 0 && selectedEntries.value.length < entries.value.length
+);
+
 const lastSyncedText = computed(() => {
-  if (!lastSyncedAt.value) return "尚未同步";
+  if (!lastSyncedAt.value) return '尚未同步';
   return formatDate(lastSyncedAt.value);
 });
 
@@ -291,28 +339,121 @@ const projectCount = computed(() => {
 
 // 导航到项目列表
 const goToProjects = () => {
-  router.push("/projects");
+  router.push('/projects');
 };
 
 const filteredProjects = computed(() => {
   const categoryId = filters.categoryId;
-  return projects.value.filter((project) => {
+  return projects.value.filter(project => {
     if (!project.isActive) return false;
     if (categoryId !== null && project.categoryId !== categoryId) return false;
     return true;
   });
 });
 
-const formatSnapshotValue = (value: unknown) => {
-  if (value === null || value === undefined) return "--";
-  if (typeof value === "object") {
-    try {
-      return JSON.stringify(value, null, 2);
-    } catch (error) {
-      return String(value);
+// 批量选择处理
+const handleSelectAll = (value: boolean) => {
+  selectAll.value = value;
+};
+
+const handleSelectEntry = (entryId: number, checked: boolean) => {
+  if (checked) {
+    if (!selectedEntries.value.includes(entryId)) {
+      selectedEntries.value.push(entryId);
+    }
+  } else {
+    const index = selectedEntries.value.indexOf(entryId);
+    if (index > -1) {
+      selectedEntries.value.splice(index, 1);
     }
   }
-  return String(value);
+};
+
+// 导航到项目详情
+const handleViewProject = (projectId: number, subProjectId: number) => {
+  router.push(`/projects/${projectId}/subprojects/${subProjectId}`);
+};
+
+// 单个关闭文档
+const handleDisableDocumentation = async (entry: DocumentationEntry) => {
+  try {
+    await ElMessageBox.confirm(`确定要关闭子项目 "${entry.subProjectName}" 的文档功能吗？`, '关闭文档确认', {
+      confirmButtonText: '确定关闭',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    disablingEntries.value.push(entry.id);
+
+    await subProjectsStore.updateSubProject(entry.subProjectId, {
+      documentationEnabled: false,
+    });
+
+    ElMessage.success('文档功能已关闭');
+    await loadDocumentation();
+
+    // 从选中列表中移除
+    const index = selectedEntries.value.indexOf(entry.id);
+    if (index > -1) {
+      selectedEntries.value.splice(index, 1);
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      const message = error instanceof Error ? error.message : '关闭文档功能失败';
+      ElMessage.error(message);
+    }
+  } finally {
+    const index = disablingEntries.value.indexOf(entry.id);
+    if (index > -1) {
+      disablingEntries.value.splice(index, 1);
+    }
+  }
+};
+
+// 批量关闭文档
+const handleBatchDisableDocumentation = async () => {
+  if (!selectedEntries.value.length) return;
+
+  try {
+    const selectedNames = entries.value
+      .filter(entry => selectedEntries.value.includes(entry.id))
+      .map(entry => entry.subProjectName);
+
+    await ElMessageBox.confirm(
+      `确定要关闭以下 ${selectedEntries.value.length} 个子项目的文档功能吗？\n\n${selectedNames.join('\n')}`,
+      '批量关闭文档确认',
+      {
+        confirmButtonText: '确定关闭',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    batchDisabling.value = true;
+
+    // 获取需要更新的子项目ID
+    const subProjectIds = entries.value
+      .filter(entry => selectedEntries.value.includes(entry.id))
+      .map(entry => entry.subProjectId);
+
+    // 批量更新子项目
+    const updatePromises = subProjectIds.map(subProjectId =>
+      subProjectsStore.updateSubProject(subProjectId, { documentationEnabled: false })
+    );
+
+    await Promise.all(updatePromises);
+
+    ElMessage.success(`已成功关闭 ${selectedEntries.value.length} 个子项目的文档功能`);
+    selectedEntries.value = [];
+    await loadDocumentation();
+  } catch (error) {
+    if (error !== 'cancel') {
+      const message = error instanceof Error ? error.message : '批量关闭文档功能失败';
+      ElMessage.error(message);
+    }
+  } finally {
+    batchDisabling.value = false;
+  }
 };
 
 const loadDocumentation = async () => {
@@ -322,8 +463,10 @@ const loadDocumentation = async () => {
       projectId: filters.projectId ?? undefined,
       keyword: filters.keyword.trim() || undefined,
     });
+    // 清空选中状态
+    selectedEntries.value = [];
   } catch (error) {
-    const message = error instanceof Error ? error.message : "获取文档数据失败";
+    const message = error instanceof Error ? error.message : '获取文档数据失败';
     ElMessage.error(message);
   }
 };
@@ -335,15 +478,13 @@ const handleSearch = () => {
 const handleReset = () => {
   filters.categoryId = null;
   filters.projectId = null;
-  filters.keyword = "";
+  filters.keyword = '';
   loadDocumentation();
 };
 
 const handleCategoryChange = () => {
   if (filters.projectId !== null) {
-    const exists = filteredProjects.value.some(
-      (project) => project.id === filters.projectId
-    );
+    const exists = filteredProjects.value.some(project => project.id === filters.projectId);
     if (!exists) filters.projectId = null;
   }
   loadDocumentation();
@@ -357,9 +498,9 @@ const handleRegenerate = async () => {
   regenerating.value = true;
   try {
     await regenerateDocumentation();
-    ElMessage.success("文档生成任务已提交");
+    ElMessage.success('文档生成任务已提交');
   } catch (error) {
-    const message = error instanceof Error ? error.message : "生成文档失败";
+    const message = error instanceof Error ? error.message : '生成文档失败';
     ElMessage.error(message);
   } finally {
     regenerating.value = false;
@@ -368,10 +509,7 @@ const handleRegenerate = async () => {
 
 onMounted(async () => {
   try {
-    await Promise.allSettled([
-      projectCategoriesStore.fetchCategories(),
-      projectsStore.fetchProjects({ limit: 100 }),
-    ]);
+    await Promise.allSettled([projectCategoriesStore.fetchCategories(), projectsStore.fetchProjects({ limit: 100 })]);
   } catch (error) {
     // 忽略单独的异常，错误会在各自的方法中提示
   } finally {
@@ -386,14 +524,21 @@ onMounted(async () => {
 }
 
 /* 头部卡片 */
-.header-card {
+.header-card,
+.batch-operations-card {
   background: white;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.header-card :deep(.el-card__body) {
+.header-card :deep(.el-card__body),
+.batch-operations-card :deep(.el-card__body) {
   padding: 1.5rem;
+}
+
+.batch-operations-card {
+  border-color: #f59e0b;
+  background: #fffbeb;
 }
 
 .stats-bar .stat-item {
@@ -413,8 +558,8 @@ onMounted(async () => {
   background-color: #d1d5db;
 }
 
-/* 分类区域 */
-.category-section {
+/* 文档概览 */
+.documentation-overview {
   animation: fadeInUp 0.5s ease-out;
 }
 
@@ -429,88 +574,52 @@ onMounted(async () => {
   }
 }
 
-.category-header {
-  padding: 1rem;
-  background: #f9fafb;
-  border-left: 4px solid #3b82f6;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  border-left: 4px solid #3b82f6;
-}
-
-.category-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: #eff6ff;
-  border-radius: 0.5rem;
-}
-
-/* 项目卡片 */
-.project-card {
+/* 文档卡片 */
+.documentation-card {
   border: 1px solid #e2e8f0;
   transition: all 0.3s ease;
+  position: relative;
 }
 
-.project-card:hover {
+.documentation-card:hover {
   border-color: #3b82f6;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-}
-
-.project-card :deep(.el-card__header) {
-  background: #f8fafc;
-  border-bottom: 2px solid #e2e8f0;
-  padding: 1rem 1.25rem;
-}
-
-/* 子项目 */
-.subprojects-container {
-  padding: 0.5rem 0;
-}
-
-.subproject-item {
-  padding: 1.25rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  transition: all 0.3s ease;
-}
-
-.subproject-item:hover {
-  background: #f8fafc;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 
-.subproject-header {
-  padding-bottom: 0.75rem;
-  border-bottom: 1px dashed #e2e8f0;
+.documentation-card.selected {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
 }
 
-/* 快照内容 */
-.snapshot-content {
-  padding-top: 1rem;
+.documentation-card :deep(.el-card__header) {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
 }
 
-.snapshot-item {
-  padding: 0.875rem;
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
+.documentation-card.selected :deep(.el-card__header) {
+  background: #fef3c7;
+  border-bottom-color: #f59e0b;
 }
 
-.snapshot-item:hover {
-  background: white;
-  border-color: #3b82f6;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
+.documentation-card :deep(.el-card__body) {
+  padding: 1rem;
+}
+
+/* 文本截断样式 */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* 移动端适配 */
 @media (max-width: 768px) {
-  .header-card :deep(.el-card__body) {
+  .header-card :deep(.el-card__body),
+  .batch-operations-card :deep(.el-card__body) {
     padding: 1rem;
   }
 
@@ -524,19 +633,7 @@ onMounted(async () => {
     display: none;
   }
 
-  .category-header {
-    padding: 0.75rem;
-  }
-
-  .projects-container {
-    margin-left: 0 !important;
-  }
-
-  .subproject-item {
-    padding: 1rem;
-  }
-
-  .snapshot-content .grid {
+  .documentation-overview .grid {
     grid-template-columns: 1fr !important;
   }
 }
@@ -547,7 +644,7 @@ onMounted(async () => {
 }
 
 /* 加载动画 */
-.documentation-list {
+.documentation-overview {
   animation: fadeIn 0.4s ease-out;
 }
 

@@ -982,159 +982,274 @@ const handleToggle = (value: boolean) => {
 ```vue
 <!-- views/DocumentationCenter.vue -->
 <template>
-  <div class="documentation-center space-y-6">
-    <el-card shadow="never">
-      <div class="flex flex-wrap items-center gap-4">
-        <el-select
-          v-model="filters.categoryId"
-          placeholder="选择分类"
-          clearable
-          class="w-56"
-        >
-          <el-option
-            v-for="category in categories"
-            :key="category.id"
-            :label="category.name"
-            :value="category.id"
-          />
-        </el-select>
-        <el-select
-          v-model="filters.projectId"
-          placeholder="选择项目"
-          clearable
-          class="w-56"
-        >
-          <el-option
-            v-for="project in projects"
-            :key="project.id"
-            :label="project.name"
-            :value="project.id"
-          />
-        </el-select>
-        <el-input
-          v-model="filters.keyword"
-          placeholder="搜索子项目或关键字"
-          clearable
-          class="w-72"
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-button type="primary" @click="handleSearch">查询</el-button>
-        <el-button @click="handleRegenerate" :loading="regenerating">
-          重新生成文档
-        </el-button>
-        <span class="text-xs text-gray-500">
-          最近同步时间：{{ lastSyncedAt || "暂无" }}
-        </span>
+  <section class="documentation-center space-y-6">
+    <!-- 页面头部 -->
+    <el-card shadow="never" class="header-card">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="header-info">
+          <div class="flex items-center gap-3">
+            <el-icon :size="28" class="text-primary">
+              <DocumentCopy />
+            </el-icon>
+            <div>
+              <h2 class="text-2xl font-bold text-slate-900">文档中心</h2>
+              <p class="text-sm text-slate-500 mt-1">概览管理已开启文档的子项目，支持批量操作</p>
+            </div>
+          </div>
+        </div>
+        <div class="stats-bar flex flex-wrap items-center gap-4 text-sm">
+          <div class="stat-item">
+            <el-icon class="text-blue-500"><Folder /></el-icon>
+            <span class="ml-1 text-slate-600">分类：</span>
+            <span class="font-semibold text-slate-900">{{ categoryCount }}</span>
+          </div>
+          <div class="stat-item">
+            <el-icon class="text-green-500"><Collection /></el-icon>
+            <span class="ml-1 text-slate-600">项目：</span>
+            <span class="font-semibold text-slate-900">{{ projectCount }}</span>
+          </div>
+          <div class="stat-item">
+            <el-icon class="text-purple-500"><Document /></el-icon>
+            <span class="ml-1 text-slate-600">文档：</span>
+            <span class="font-semibold text-slate-900">{{ entries.length }}</span>
+          </div>
+          <el-divider direction="vertical" />
+          <div class="stat-item text-xs text-slate-500">
+            <el-icon><Timer /></el-icon>
+            <span class="ml-1">最近同步：{{ lastSyncedText }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 筛选和操作区域 -->
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div class="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
+          <el-select v-model="filters.categoryId" placeholder="选择主项目分类" clearable class="w-full lg:w-48" @change="handleCategoryChange">
+            <el-option :value="null" label="全部分类" />
+            <el-option v-for="category in activeCategories" :key="category.id" :label="category.name" :value="category.id" />
+          </el-select>
+          <el-select v-model="filters.projectId" placeholder="选择主项目" clearable class="w-full lg:w-52" @change="handleProjectChange">
+            <el-option :value="null" label="全部项目" />
+            <el-option v-for="project in filteredProjects" :key="project.id" :label="project.name" :value="project.id" />
+          </el-select>
+          <el-input v-model="filters.keyword" placeholder="搜索子项目名称" clearable class="w-full lg:flex-1" @keyup.enter="handleSearch">
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <el-button :loading="loading" type="primary" @click="handleSearch">
+            <el-icon class="mr-1"><Search /></el-icon>
+            查询
+          </el-button>
+          <el-button @click="handleReset">重置</el-button>
+          <el-button type="success" :loading="regenerating" @click="handleRegenerate">
+            <el-icon class="mr-1"><Refresh /></el-icon>
+            生成文档
+          </el-button>
+        </div>
       </div>
     </el-card>
 
-    <el-empty v-if="!entries.length && !loading" description="暂无文档数据" />
+    <!-- 批量操作栏 -->
+    <el-card v-if="entries.length" shadow="never" class="batch-operations-card">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+          <el-checkbox v-model="selectAll" :indeterminate="isIndeterminate" @change="handleSelectAll">全选</el-checkbox>
+          <span class="text-sm text-slate-500">已选择 {{ selectedEntries.length }} / {{ entries.length }} 个文档</span>
+        </div>
+        <div class="flex gap-2">
+          <el-button :disabled="!selectedEntries.length" :loading="batchDisabling" type="warning" size="small" @click="handleBatchDisableDocumentation">
+            <el-icon class="mr-1"><Close /></el-icon>
+            批量关闭文档 ({{ selectedEntries.length }})
+          </el-button>
+        </div>
+      </div>
+    </el-card>
 
-    <el-skeleton v-else-if="loading" :rows="6" animated />
+    <!-- 加载状态 -->
+    <LoadingSpinner v-if="loading" text="正在加载文档..." />
 
-    <div v-else class="space-y-6">
-      <el-card
-        v-for="(items, categoryName) in groupedByCategory"
-        :key="categoryName"
-        shadow="hover"
-      >
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold">
-              {{ categoryName || "未分类" }}
-            </h3>
-            <span class="text-sm text-gray-500">
-              共 {{ items.length }} 个子项目
-            </span>
+    <!-- 空状态 -->
+    <template v-else-if="!entries.length">
+      <el-empty description="" class="py-12">
+        <template #image>
+          <el-icon :size="80" class="text-slate-300"><Document /></el-icon>
+        </template>
+        <template #description>
+          <div class="space-y-2">
+            <p class="text-base font-medium text-slate-600">暂无文档内容</p>
+            <p class="text-sm text-slate-400">还没有子项目开启文档生成功能</p>
+            <el-button type="primary" size="small" class="mt-3" @click="goToProjects">
+              <el-icon class="mr-1"><Plus /></el-icon>
+              前往开启文档
+            </el-button>
           </div>
         </template>
+      </el-empty>
+    </template>
 
-        <el-timeline>
-          <el-timeline-item
-            v-for="entry in items"
-            :key="entry.id"
-            :timestamp="formatDate(entry.generatedAt)"
-            placement="top"
-          >
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="text-base font-medium">{{ entry.subProjectName }}</h4>
-                  <p class="text-xs text-gray-500">
-                    项目：{{ entry.projectName }}
-                  </p>
-                </div>
-                <el-tag type="success" size="small">文档已生成</el-tag>
-              </div>
-              <el-descriptions :column="1" border>
-                <el-descriptions-item
-                  v-for="(value, key) in entry.snapshot"
-                  :key="key"
-                  :label="key"
-                >
-                  {{ value }}
-                </el-descriptions-item>
-              </el-descriptions>
+    <!-- 文档概览 - 卡片网格布局 -->
+    <div v-else class="documentation-overview">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <el-card v-for="entry in entries" :key="entry.id" shadow="hover" class="documentation-card" :class="{ selected: selectedEntries.includes(entry.id) }">
+          <template #header>
+            <div class="flex items-center justify-between">
+              <el-checkbox :model-value="selectedEntries.includes(entry.id)" @change="(checked: boolean) => handleSelectEntry(entry.id, checked)" />
+              <el-tag type="success" size="small" effect="plain">文档已启用</el-tag>
             </div>
-          </el-timeline-item>
-        </el-timeline>
-      </el-card>
+          </template>
+
+          <div class="space-y-3">
+            <!-- 子项目名称 -->
+            <div>
+              <h4 class="text-lg font-semibold text-slate-800 mb-1 line-clamp-2">{{ entry.subProjectName }}</h4>
+              <div class="flex items-center gap-1 text-xs text-slate-500">
+                <el-icon class="text-blue-500"><Folder /></el-icon>
+                <span>{{ entry.categoryName }}</span>
+                <el-divider direction="vertical" />
+                <el-icon class="text-green-500"><Collection /></el-icon>
+                <span>{{ entry.projectName }}</span>
+              </div>
+            </div>
+
+            <!-- 文档信息 -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">内容数量：</span>
+                <span class="font-medium text-slate-800">{{ Object.keys(entry.snapshot).length }} 项</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">生成时间：</span>
+                <span class="font-medium text-slate-800">{{ formatDate(entry.generatedAt) }}</span>
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex gap-2 pt-2 border-t border-slate-100">
+              <el-button type="primary" size="small" text @click="handleViewProject(entry.projectId, entry.subProjectId)">
+                <el-icon class="mr-1"><View /></el-icon>
+                查看详情
+              </el-button>
+              <el-button type="warning" size="small" text :loading="disablingEntries.includes(entry.id)" @click="handleDisableDocumentation(entry)">
+                <el-icon class="mr-1"><Close /></el-icon>
+                关闭文档
+              </el-button>
+            </div>
+          </div>
+        </el-card>
+      </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, onMounted } from "vue";
-import { useDocumentation } from "@/composables/useDocumentation";
-import { useProjectsStore } from "@/stores/projects";
-import { useProjectCategoriesStore } from "@/stores/projectCategories";
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { Collection, Document, DocumentCopy, Folder, Refresh, Search, Timer, Plus, Close, View } from '@element-plus/icons-vue';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import { useDocumentation } from '@/composables/useDocumentation';
+import { useDateFormat } from '@/composables/useDateFormat';
+import { useProjectCategoriesStore } from '@/stores/projectCategories';
+import { useProjectsStore } from '@/stores/projects';
+import { useSubProjectsStore } from '@/stores/subProjects';
+import type { DocumentationEntry } from '@/types';
 
-const projectsStore = useProjectsStore();
-const projectCategoriesStore = useProjectCategoriesStore();
-const { entries, loading, lastSyncedAt, groupedByCategory, fetchDocumentation, regenerateDocumentation } =
-  useDocumentation();
+// 核心逻辑：概览管理模式
+const documentation = useDocumentation();
+const { entries, loading, lastSyncedAt, fetchDocumentation, regenerateDocumentation } = documentation;
 
-const filters = reactive({
-  categoryId: undefined as number | undefined,
-  projectId: undefined as number | undefined,
-  keyword: "",
+// 批量选择状态管理
+const selectedEntries = ref<number[]>([]);
+const batchDisabling = ref(false);
+const disablingEntries = ref<number[]>([]);
+
+// 全选状态计算
+const selectAll = computed({
+  get: () => selectedEntries.value.length === entries.value.length && entries.value.length > 0,
+  set: (value: boolean) => {
+    if (value) {
+      selectedEntries.value = entries.value.map(entry => entry.id);
+    } else {
+      selectedEntries.value = [];
+    }
+  },
 });
 
-const regenerating = ref(false);
+const isIndeterminate = computed(() => selectedEntries.value.length > 0 && selectedEntries.value.length < entries.value.length);
 
-const handleSearch = () => {
-  fetchDocumentation({
-    categoryId: filters.categoryId,
-    projectId: filters.projectId,
-    keyword: filters.keyword || undefined,
-  });
-};
+// 批量操作处理
+const handleBatchDisableDocumentation = async () => {
+  if (!selectedEntries.value.length) return;
 
-const handleRegenerate = async () => {
-  regenerating.value = true;
   try {
-    await regenerateDocumentation();
+    const selectedNames = entries.value.filter(entry => selectedEntries.value.includes(entry.id)).map(entry => entry.subProjectName);
+
+    await ElMessageBox.confirm(`确定要关闭以下 ${selectedEntries.value.length} 个子项目的文档功能吗？\n\n${selectedNames.join('\n')}`, '批量关闭文档确认', {
+      confirmButtonText: '确定关闭',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    batchDisabling.value = true;
+
+    // 获取需要更新的子项目ID
+    const subProjectIds = entries.value.filter(entry => selectedEntries.value.includes(entry.id)).map(entry => entry.subProjectId);
+
+    // 批量更新子项目
+    const updatePromises = subProjectIds.map(subProjectId => subProjectsStore.updateSubProject(subProjectId, { documentationEnabled: false }));
+
+    await Promise.all(updatePromises);
+
+    ElMessage.success(`已成功关闭 ${selectedEntries.value.length} 个子项目的文档功能`);
+    selectedEntries.value = [];
+    await loadDocumentation();
+  } catch (error) {
+    if (error !== 'cancel') {
+      const message = error instanceof Error ? error.message : '批量关闭文档功能失败';
+      ElMessage.error(message);
+    }
   } finally {
-    regenerating.value = false;
+    batchDisabling.value = false;
   }
 };
 
-const formatDate = (date: string) => new Date(date).toLocaleString();
+// 单个关闭文档处理
+const handleDisableDocumentation = async (entry: DocumentationEntry) => {
+  try {
+    await ElMessageBox.confirm(`确定要关闭子项目 "${entry.subProjectName}" 的文档功能吗？`, '关闭文档确认', {
+      confirmButtonText: '确定关闭',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
 
-onMounted(async () => {
-  await Promise.all([
-    projectsStore.fetchProjects(),
-    projectCategoriesStore.fetchCategories(),
-    fetchDocumentation(),
-  ]);
-});
+    disablingEntries.value.push(entry.id);
 
-const projects = computed(() => projectsStore.projects);
-const categories = computed(() => projectCategoriesStore.categories);
+    await subProjectsStore.updateSubProject(entry.subProjectId, { documentationEnabled: false });
+
+    ElMessage.success('文档功能已关闭');
+    await loadDocumentation();
+
+    // 从选中列表中移除
+    const index = selectedEntries.value.indexOf(entry.id);
+    if (index > -1) {
+      selectedEntries.value.splice(index, 1);
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      const message = error instanceof Error ? error.message : '关闭文档功能失败';
+      ElMessage.error(message);
+    }
+  } finally {
+    const index = disablingEntries.value.indexOf(entry.id);
+    if (index > -1) {
+      disablingEntries.value.splice(index, 1);
+    }
+  }
+};
 </script>
 ```
 
