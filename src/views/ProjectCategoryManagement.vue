@@ -124,7 +124,7 @@ const emptyDescription = computed(() => {
 
 const deleteConfirmText = computed(() => {
   if (!deletingCategory.value) return '确定删除该分类吗？';
-  const count = deletingCategory.value.projectCount || 0;
+  const count = deletingCategory.value.activeProjectCount || 0;
   if (count > 0) {
     return `该分类下有 ${count} 个项目，删除后这些项目需要重新分配分类。确定删除吗？`;
   }

@@ -38,7 +38,7 @@
             <el-icon>
               <Collection />
             </el-icon>
-            {{ category.projectCount || 0 }} 个项目
+            {{ category.activeProjectCount || 0 }} 个项目
           </span>
           <span class="flex items-center gap-1">
             <el-icon>

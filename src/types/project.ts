@@ -6,7 +6,7 @@ export interface ProjectCategory {
   description?: string;
   sortOrder: number;
   isActive: boolean;
-  projectCount?: number;
+  activeProjectCount?: number;
 }
 
 export interface Project {

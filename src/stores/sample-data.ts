@@ -116,7 +116,7 @@ export const sampleProjectCategories: ProjectCategory[] = [
     description: "各大电商主站活动",
     sortOrder: 1,
     isActive: true,
-    projectCount: 1,
+    activeProjectCount: 1,
   },
   {
     id: 2,
@@ -124,7 +124,7 @@ export const sampleProjectCategories: ProjectCategory[] = [
     description: "达人、直播等渠道",
     sortOrder: 2,
     isActive: true,
-    projectCount: 1,
+    activeProjectCount: 1,
   },
 ];
 

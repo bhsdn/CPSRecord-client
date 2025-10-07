@@ -11,7 +11,7 @@ interface CategoryListResponse {
 type RawProjectCategory = ProjectCategory & {
   sort_order?: number;
   is_active?: boolean;
-  project_count?: number;
+  active_project_count?: number;
 };
 
 const normalizeCategory = (raw: Partial<RawProjectCategory>): ProjectCategory => ({
@@ -20,7 +20,7 @@ const normalizeCategory = (raw: Partial<RawProjectCategory>): ProjectCategory =>
   description: raw.description ?? "",
   sortOrder: raw.sortOrder ?? raw.sort_order ?? 0,
   isActive: raw.isActive ?? raw.is_active ?? true,
-  projectCount: raw.projectCount ?? raw.project_count,
+  activeProjectCount: raw.activeProjectCount ?? raw.active_project_count,
 });
 
 export const useProjectCategoriesStore = defineStore("projectCategories", () => {
@@ -50,7 +50,7 @@ export const useProjectCategoriesStore = defineStore("projectCategories", () => 
 
   const activeCategories = computed(() => categories.value.filter((item) => item.isActive));
 
-  const createCategory = async (payload: Omit<ProjectCategory, 'id' | 'projectCount'>) => {
+  const createCategory = async (payload: Omit<ProjectCategory, 'id' | 'activeProjectCount'>) => {
     try {
       const response = await api.post<ApiResponse<RawProjectCategory>>('/project-categories', payload);
       const data = unwrap(response);

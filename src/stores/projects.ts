@@ -9,7 +9,7 @@ import { formatDate } from "@/utils/date";
 type RawProjectCategory = ProjectCategory & {
   sort_order?: number;
   is_active?: boolean;
-  project_count?: number;
+  active_project_count?: number;
 };
 
 type RawProject = Project & {
@@ -40,7 +40,7 @@ const normalizeCategory = (raw?: Partial<RawProjectCategory>): ProjectCategory |
     description: raw.description ?? "",
     sortOrder: raw.sortOrder ?? raw.sort_order ?? 0,
     isActive: raw.isActive ?? raw.is_active ?? true,
-    projectCount: raw.projectCount ?? raw.project_count,
+    activeProjectCount: raw.activeProjectCount ?? raw.active_project_count,
   };
 };
 
