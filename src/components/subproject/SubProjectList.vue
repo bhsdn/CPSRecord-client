@@ -60,7 +60,7 @@
                 </el-button>
               </div>
               <el-empty v-if="!subProject.contents.length" description="暂无内容" :image-size="100" />
-              <div v-else class="space-y-3">
+              <div v-else class="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div
                   v-for="content in subProject.contents"
                   :key="content.id"
@@ -120,7 +120,7 @@
                 </el-button>
               </div>
               <el-empty v-if="!subProject.textCommands.length" description="暂无口令" :image-size="100" />
-              <div v-else class="space-y-3">
+              <div v-else class="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div
                   v-for="command in subProject.textCommands"
                   :key="command.id"
