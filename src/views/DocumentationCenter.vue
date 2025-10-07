@@ -1,251 +1,272 @@
 <template>
-  <section class="documentation-center space-y-6">
-    <!-- 页面头部 -->
-    <el-card shadow="never" class="header-card">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div class="header-info">
-          <div class="flex items-center gap-3">
-            <el-icon :size="28" class="text-primary">
-              <DocumentCopy />
-            </el-icon>
-            <div>
-              <h2 class="text-2xl font-bold text-slate-900">文档中心</h2>
-              <p class="text-sm text-slate-500 mt-1">概览管理已开启文档的子项目，支持批量操作</p>
+  <section class="documentation-center-container">
+    <div class="documentation-center-content">
+      <!-- 页面头部 -->
+      <el-card shadow="never" class="header-card">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div class="header-info">
+            <div class="flex items-center gap-3">
+              <el-icon :size="28" class="text-primary">
+                <DocumentCopy />
+              </el-icon>
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">文档中心</h2>
+                <p class="text-sm text-slate-500 mt-1">概览管理已开启文档的子项目，支持批量操作</p>
+              </div>
+            </div>
+          </div>
+          <div class="stats-bar flex flex-wrap items-center gap-4 text-sm">
+            <div class="stat-item">
+              <el-icon class="text-blue-500">
+                <Folder />
+              </el-icon>
+              <span class="ml-1 text-slate-600">分类：</span>
+              <span class="font-semibold text-slate-900">{{ categoryCount }}</span>
+            </div>
+            <div class="stat-item">
+              <el-icon class="text-green-500">
+                <Collection />
+              </el-icon>
+              <span class="ml-1 text-slate-600">项目：</span>
+              <span class="font-semibold text-slate-900">{{ projectCount }}</span>
+            </div>
+            <div class="stat-item">
+              <el-icon class="text-purple-500">
+                <Document />
+              </el-icon>
+              <span class="ml-1 text-slate-600">文档：</span>
+              <span class="font-semibold text-slate-900">{{ entries.length }}</span>
+            </div>
+            <el-divider direction="vertical" />
+            <div class="stat-item text-xs text-slate-500">
+              <el-icon>
+                <Timer />
+              </el-icon>
+              <span class="ml-1">最近同步：{{ lastSyncedText }}</span>
             </div>
           </div>
         </div>
-        <div class="stats-bar flex flex-wrap items-center gap-4 text-sm">
-          <div class="stat-item">
-            <el-icon class="text-blue-500">
-              <Folder />
-            </el-icon>
-            <span class="ml-1 text-slate-600">分类：</span>
-            <span class="font-semibold text-slate-900">{{ categoryCount }}</span>
-          </div>
-          <div class="stat-item">
-            <el-icon class="text-green-500">
-              <Collection />
-            </el-icon>
-            <span class="ml-1 text-slate-600">项目：</span>
-            <span class="font-semibold text-slate-900">{{ projectCount }}</span>
-          </div>
-          <div class="stat-item">
-            <el-icon class="text-purple-500">
-              <Document />
-            </el-icon>
-            <span class="ml-1 text-slate-600">文档：</span>
-            <span class="font-semibold text-slate-900">{{ entries.length }}</span>
-          </div>
-          <el-divider direction="vertical" />
-          <div class="stat-item text-xs text-slate-500">
-            <el-icon>
-              <Timer />
-            </el-icon>
-            <span class="ml-1">最近同步：{{ lastSyncedText }}</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div class="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
-          <el-select
-            v-model="filters.categoryId"
-            placeholder="选择主项目分类"
-            clearable
-            class="w-full lg:w-48"
-            @change="handleCategoryChange"
-          >
-            <el-option :value="null" label="全部分类" />
-            <el-option
-              v-for="category in activeCategories"
-              :key="category.id"
-              :label="category.name"
-              :value="category.id"
-            />
-          </el-select>
-          <el-select
-            v-model="filters.projectId"
-            placeholder="选择主项目"
-            clearable
-            class="w-full lg:w-52"
-            @change="handleProjectChange"
-          >
-            <el-option :value="null" label="全部项目" />
-            <el-option
-              v-for="project in filteredProjects"
-              :key="project.id"
-              :label="project.name"
-              :value="project.id"
-            />
-          </el-select>
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索子项目名称"
-            clearable
-            class="w-full lg:flex-1"
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <el-icon>
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div class="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
+            <el-select
+              v-model="filters.categoryId"
+              placeholder="选择主项目分类"
+              clearable
+              class="w-full lg:w-48"
+              @change="handleCategoryChange"
+            >
+              <el-option :value="null" label="全部分类" />
+              <el-option
+                v-for="category in activeCategories"
+                :key="category.id"
+                :label="category.name"
+                :value="category.id"
+              />
+            </el-select>
+            <el-select
+              v-model="filters.projectId"
+              placeholder="选择主项目"
+              clearable
+              class="w-full lg:w-52"
+              @change="handleProjectChange"
+            >
+              <el-option :value="null" label="全部项目" />
+              <el-option
+                v-for="project in filteredProjects"
+                :key="project.id"
+                :label="project.name"
+                :value="project.id"
+              />
+            </el-select>
+            <el-input
+              v-model="filters.keyword"
+              placeholder="搜索子项目名称"
+              clearable
+              class="w-full lg:flex-1"
+              @keyup.enter="handleSearch"
+            >
+              <template #prefix>
+                <el-icon>
+                  <Search />
+                </el-icon>
+              </template>
+            </el-input>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <el-button :loading="loading" type="primary" @click="handleSearch">
+              <el-icon class="mr-1">
                 <Search />
               </el-icon>
-            </template>
-          </el-input>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <el-button :loading="loading" type="primary" @click="handleSearch">
-            <el-icon class="mr-1">
-              <Search />
-            </el-icon>
-            查询
-          </el-button>
-          <el-button @click="handleReset">重置</el-button>
-          <el-button type="success" :loading="regenerating" @click="handleRegenerate">
-            <el-icon class="mr-1">
-              <Refresh />
-            </el-icon>
-            生成文档
-          </el-button>
-        </div>
-      </div>
-    </el-card>
-
-    <!-- 批量操作栏 -->
-    <el-card v-if="entries.length" shadow="never" class="batch-operations-card">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-3">
-          <el-checkbox v-model="selectAll" :indeterminate="isIndeterminate" @change="handleSelectAll">全选</el-checkbox>
-          <span class="text-sm text-slate-500">已选择 {{ selectedEntries.length }} / {{ entries.length }} 个文档</span>
-        </div>
-        <div class="flex gap-2">
-          <el-button
-            :disabled="!selectedEntries.length"
-            :loading="batchDisabling"
-            type="warning"
-            size="small"
-            @click="handleBatchDisableDocumentation"
-          >
-            <el-icon class="mr-1">
-              <Close />
-            </el-icon>
-            批量关闭文档 ({{ selectedEntries.length }})
-          </el-button>
-        </div>
-      </div>
-    </el-card>
-
-    <!-- 加载状态 -->
-    <LoadingSpinner v-if="loading" text="正在加载文档..." />
-
-    <!-- 空状态 -->
-    <template v-else-if="!entries.length">
-      <el-empty description="" class="py-12">
-        <template #image>
-          <el-icon :size="80" class="text-slate-300">
-            <Document />
-          </el-icon>
-        </template>
-        <template #description>
-          <div class="space-y-2">
-            <p class="text-base font-medium text-slate-600">暂无文档内容</p>
-            <p class="text-sm text-slate-400">还没有子项目开启文档生成功能</p>
-            <el-button type="primary" size="small" class="mt-3" @click="goToProjects">
+              查询
+            </el-button>
+            <el-button @click="handleReset">重置</el-button>
+            <el-button type="success" :loading="regenerating" @click="handleRegenerate">
               <el-icon class="mr-1">
-                <Plus />
+                <Refresh />
               </el-icon>
-              前往开启文档
+              生成文档
             </el-button>
           </div>
-        </template>
-      </el-empty>
-    </template>
+        </div>
+      </el-card>
 
-    <!-- 文档概览 - 卡片网格布局 -->
-    <div v-else class="documentation-overview">
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <el-card
-          v-for="entry in entries"
-          :key="entry.id"
-          shadow="hover"
-          class="documentation-card"
-          :class="{ selected: selectedEntries.includes(entry.id) }"
-        >
-          <template #header>
-            <div class="flex items-center justify-between">
-              <el-checkbox
-                :model-value="selectedEntries.includes(entry.id)"
-                @change="(checked: boolean) => handleSelectEntry(entry.id, checked)"
-              />
-              <el-tag type="success" size="small" effect="plain">文档已启用</el-tag>
+      <!-- 批量操作栏 -->
+      <el-card v-if="entries.length" shadow="never" class="batch-operations-card">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-3">
+            <el-checkbox v-model="selectAll" :indeterminate="isIndeterminate" @change="handleSelectAll">
+              全选
+            </el-checkbox>
+            <span class="text-sm text-slate-500">
+              已选择 {{ selectedEntries.length }} / {{ entries.length }} 个文档
+            </span>
+          </div>
+          <div class="flex gap-2">
+            <el-button
+              :disabled="!selectedEntries.length"
+              :loading="batchDisabling"
+              type="warning"
+              size="small"
+              @click="handleBatchDisableDocumentation"
+            >
+              <el-icon class="mr-1">
+                <Close />
+              </el-icon>
+              批量关闭文档 ({{ selectedEntries.length }})
+            </el-button>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 加载状态 -->
+      <LoadingSpinner v-if="loading" text="正在加载文档..." />
+
+      <!-- 空状态 -->
+      <template v-else-if="!entries.length">
+        <el-empty description="" class="py-12">
+          <template #image>
+            <el-icon :size="80" class="text-slate-300">
+              <Document />
+            </el-icon>
+          </template>
+          <template #description>
+            <div class="space-y-2">
+              <p class="text-base font-medium text-slate-600">暂无文档内容</p>
+              <p class="text-sm text-slate-400">还没有子项目开启文档生成功能</p>
+              <el-button type="primary" size="small" class="mt-3" @click="goToProjects">
+                <el-icon class="mr-1">
+                  <Plus />
+                </el-icon>
+                前往开启文档
+              </el-button>
             </div>
           </template>
+        </el-empty>
+      </template>
 
-          <div class="space-y-3">
-            <!-- 子项目名称 -->
-            <div>
-              <h4 class="text-lg font-semibold text-slate-800 mb-1 line-clamp-2">
-                {{ entry.subProjectName }}
-              </h4>
-              <div class="flex items-center gap-1 text-xs text-slate-500">
-                <el-icon class="text-blue-500">
-                  <Folder />
-                </el-icon>
-                <span>{{ entry.categoryName }}</span>
-                <el-divider direction="vertical" />
-                <el-icon class="text-green-500">
-                  <Collection />
-                </el-icon>
-                <span>{{ entry.projectName }}</span>
+      <!-- 文档概览 - 卡片网格布局 -->
+      <div v-else class="documentation-overview">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <el-card
+            v-for="entry in entries"
+            :key="entry.id"
+            shadow="hover"
+            class="documentation-card"
+            :class="{ selected: selectedEntries.includes(entry.id) }"
+          >
+            <template #header>
+              <div class="flex items-center justify-between">
+                <el-checkbox
+                  :model-value="selectedEntries.includes(entry.id)"
+                  @change="(checked: boolean) => handleSelectEntry(entry.id, checked)"
+                />
+                <el-tag type="success" size="small" effect="plain">文档已启用</el-tag>
+              </div>
+            </template>
+
+            <div class="space-y-3">
+              <!-- 子项目名称 -->
+              <div>
+                <h4 class="text-lg font-semibold text-slate-800 mb-1 line-clamp-2">
+                  {{ entry.subProjectName }}
+                </h4>
+                <div class="flex items-center gap-1 text-xs text-slate-500">
+                  <el-icon class="text-blue-500">
+                    <Folder />
+                  </el-icon>
+                  <span>{{ entry.categoryName }}</span>
+                  <el-divider direction="vertical" />
+                  <el-icon class="text-green-500">
+                    <Collection />
+                  </el-icon>
+                  <span>{{ entry.projectName }}</span>
+                </div>
+              </div>
+
+              <!-- 文档信息 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-600">内容数量：</span>
+                  <span class="font-medium text-slate-800">{{ Object.keys(entry.snapshot).length }} 项</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-600">生成时间：</span>
+                  <span class="font-medium text-slate-800">{{ formatDate(entry.generatedAt) }}</span>
+                </div>
+              </div>
+
+              <!-- 操作按钮 -->
+              <div class="flex gap-2 pt-2 border-t border-slate-100">
+                <el-button
+                  type="primary"
+                  size="small"
+                  text
+                  @click="handleViewProject(entry.projectId, entry.subProjectId)"
+                >
+                  <el-icon class="mr-1">
+                    <View />
+                  </el-icon>
+                  查看详情
+                </el-button>
+                <el-button
+                  type="warning"
+                  size="small"
+                  text
+                  :loading="disablingEntries.includes(entry.id)"
+                  @click="handleDisableDocumentation(entry)"
+                >
+                  <el-icon class="mr-1">
+                    <Close />
+                  </el-icon>
+                  关闭文档
+                </el-button>
               </div>
             </div>
-
-            <!-- 文档信息 -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-600">内容数量：</span>
-                <span class="font-medium text-slate-800">{{ Object.keys(entry.snapshot).length }} 项</span>
-              </div>
-              <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-600">生成时间：</span>
-                <span class="font-medium text-slate-800">{{ formatDate(entry.generatedAt) }}</span>
-              </div>
-            </div>
-
-            <!-- 操作按钮 -->
-            <div class="flex gap-2 pt-2 border-t border-slate-100">
-              <el-button
-                type="primary"
-                size="small"
-                text
-                @click="handleViewProject(entry.projectId, entry.subProjectId)"
-              >
-                <el-icon class="mr-1">
-                  <View />
-                </el-icon>
-                查看详情
-              </el-button>
-              <el-button
-                type="warning"
-                size="small"
-                text
-                :loading="disablingEntries.includes(entry.id)"
-                @click="handleDisableDocumentation(entry)"
-              >
-                <el-icon class="mr-1">
-                  <Close />
-                </el-icon>
-                关闭文档
-              </el-button>
-            </div>
-          </div>
-        </el-card>
+          </el-card>
+        </div>
       </div>
+    </div>
+
+    <!-- 分页组件 - 固定在底部 -->
+    <div v-if="!loading && entries.length > 0" class="pagination-footer">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[12, 24, 36, 48]"
+        :total="totalDocuments"
+        :layout="paginationLayout"
+        :small="isMobile"
+        class="justify-center"
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { ElMessage, ElMessageBox } from 'element-plus';
@@ -456,13 +477,46 @@ const handleBatchDisableDocumentation = async () => {
   }
 };
 
+// 移动端检测
+const isMobile = ref(false);
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+};
+
+// 响应式分页布局
+const paginationLayout = computed(() => {
+  if (isMobile.value) {
+    return 'prev, pager, next';
+  }
+  return 'total, sizes, prev, pager, next, jumper';
+});
+
+// 分页相关
+const currentPage = ref(1);
+const pageSize = ref(12); // 文档中心每页显示12个
+const totalDocuments = ref(0);
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  loadDocumentation();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  currentPage.value = 1;
+  loadDocumentation();
+};
+
 const loadDocumentation = async () => {
   try {
-    await fetchDocumentation({
+    const result = await fetchDocumentation({
       categoryId: filters.categoryId ?? undefined,
       projectId: filters.projectId ?? undefined,
       keyword: filters.keyword.trim() || undefined,
+      page: currentPage.value,
+      limit: pageSize.value,
     });
+    totalDocuments.value = result?.total || entries.value.length;
     // 清空选中状态
     selectedEntries.value = [];
   } catch (error) {
@@ -472,6 +526,7 @@ const loadDocumentation = async () => {
 };
 
 const handleSearch = () => {
+  currentPage.value = 1; // 重置到第一页
   loadDocumentation();
 };
 
@@ -479,6 +534,7 @@ const handleReset = () => {
   filters.categoryId = null;
   filters.projectId = null;
   filters.keyword = '';
+  currentPage.value = 1; // 重置到第一页
   loadDocumentation();
 };
 
@@ -515,12 +571,91 @@ onMounted(async () => {
   } finally {
     await loadDocumentation();
   }
+
+  // 初始检测和监听窗口大小变化
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile);
 });
 </script>
 
 <style scoped>
-.documentation-center {
+.documentation-center-container {
   min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+}
+
+.documentation-center-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+}
+
+.pagination-footer {
+  margin-top: auto;
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-footer :deep(.el-pagination) {
+  padding: 0.5rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* 移动端优化 - 使用 MobileLayout 时 */
+@media (max-width: 768px) {
+  .documentation-center-container {
+    min-height: auto;
+    height: 100%;
+  }
+
+  .documentation-center-content {
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .pagination-footer {
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .pagination-footer :deep(.el-pagination) {
+    width: 100%;
+  }
+
+  .pagination-footer :deep(.el-pager) {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pagination-footer :deep(.el-pager li) {
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+    font-size: 13px;
+  }
+
+  .pagination-footer :deep(.btn-prev),
+  .pagination-footer :deep(.btn-next) {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+  }
 }
 
 /* 头部卡片 */

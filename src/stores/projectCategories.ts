@@ -6,6 +6,10 @@ import { api, unwrap } from "@/utils/api";
 
 interface CategoryListResponse {
   items?: RawProjectCategory[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
 }
 
 type RawProjectCategory = ProjectCategory & {
@@ -27,20 +31,42 @@ export const useProjectCategoriesStore = defineStore("projectCategories", () => 
   const categories = ref<ProjectCategory[]>([]);
   const loading = ref(false);
 
-  const fetchCategories = async (includeInactive = true) => {
+  const fetchCategories = async (
+    includeInactive = true,
+    params?: { page?: number; limit?: number }
+  ) => {
     loading.value = true;
     try {
       const response = await api.get<ApiResponse<CategoryListResponse | RawProjectCategory[]>>("/project-categories", {
-        params: { includeInactive },
+        params: { 
+          includeInactive,
+          ...params,
+        },
       });
       const payload = unwrap(response);
       const data = payload.data;
-      const items = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.items)
-        ? data.items
-        : [];
-      categories.value = items.map((item) => normalizeCategory(item));
+      
+      // 处理分页响应或数组响应
+      if (data && typeof data === 'object' && 'items' in data) {
+        categories.value = (data.items || []).map((item) => normalizeCategory(item));
+        return {
+          total: data.total || data.items?.length || 0,
+          page: data.page || 1,
+          limit: data.limit || data.items?.length || 20,
+          totalPages: data.totalPages || 1,
+        };
+      } else if (Array.isArray(data)) {
+        categories.value = data.map((item) => normalizeCategory(item));
+        return {
+          total: data.length,
+          page: 1,
+          limit: data.length,
+          totalPages: 1,
+        };
+      }
+      
+      categories.value = [];
+      return { total: 0, page: 1, limit: 20, totalPages: 0 };
     } catch (error) {
       throw error instanceof Error ? error : new Error("获取项目分类失败");
     } finally {

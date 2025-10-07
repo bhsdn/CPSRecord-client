@@ -8,6 +8,16 @@ interface DocumentationFilters {
   categoryId?: number | null;
   projectId?: number | null;
   keyword?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface DocumentationResponse {
+  items?: RawDocumentationEntry[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
 }
 
 type RawDocumentationEntry = DocumentationEntry & {
@@ -120,27 +130,67 @@ const normalizeEntry = (raw: Partial<RawDocumentationEntry>): DocumentationEntry
   };
 };
 
-const extractEntries = (data?: unknown): RawDocumentationEntry[] => {
-  // 如果直接是数组，直接返回（后端直接返回数组的情况）
-  if (Array.isArray(data)) return data;
+const extractEntries = (data?: unknown): { 
+  entries: RawDocumentationEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+} => {
+  const defaultResult = { entries: [], total: 0, page: 1, limit: 20, totalPages: 0 };
   
-  if (!data || typeof data !== "object") return [];
+  // 如果直接是数组，直接返回（后端直接返回数组的情况）
+  if (Array.isArray(data)) {
+    return {
+      entries: data,
+      total: data.length,
+      page: 1,
+      limit: data.length,
+      totalPages: 1,
+    };
+  }
+  
+  if (!data || typeof data !== "object") return defaultResult;
   
   const dataObj = data as Record<string, unknown>;
   
+  // 处理分页响应结构 { items: [], total: 0, page: 1, limit: 20 }
+  if (dataObj.items && Array.isArray(dataObj.items)) {
+    return {
+      entries: dataObj.items,
+      total: typeof dataObj.total === 'number' ? dataObj.total : dataObj.items.length,
+      page: typeof dataObj.page === 'number' ? dataObj.page : 1,
+      limit: typeof dataObj.limit === 'number' ? dataObj.limit : dataObj.items.length,
+      totalPages: typeof dataObj.totalPages === 'number' ? dataObj.totalPages : 1,
+    };
+  }
+  
   // 如果 data.entries 是数组
-  if (Array.isArray(dataObj.entries)) return dataObj.entries;
+  if (Array.isArray(dataObj.entries)) {
+    return {
+      entries: dataObj.entries,
+      total: dataObj.entries.length,
+      page: 1,
+      limit: dataObj.entries.length,
+      totalPages: 1,
+    };
+  }
   
   // 如果 data.entries.items 是数组
   if (dataObj.entries && typeof dataObj.entries === "object") {
     const entries = dataObj.entries as Record<string, unknown>;
-    if (Array.isArray(entries.items)) return entries.items;
+    if (Array.isArray(entries.items)) {
+      return {
+        entries: entries.items,
+        total: typeof entries.total === 'number' ? entries.total : entries.items.length,
+        page: typeof entries.page === 'number' ? entries.page : 1,
+        limit: typeof entries.limit === 'number' ? entries.limit : entries.items.length,
+        totalPages: typeof entries.totalPages === 'number' ? entries.totalPages : 1,
+      };
+    }
   }
   
-  // 如果 data.items 是数组
-  if (Array.isArray(dataObj.items)) return dataObj.items;
-  
-  return [];
+  return defaultResult;
 };
 
 const resolveGeneratedAt = (data?: unknown, entries: DocumentationEntry[] = []) => {
@@ -169,6 +219,8 @@ export const useDocumentationStore = defineStore("documentation", () => {
       categoryId: filters?.categoryId ?? null,
       projectId: filters?.projectId ?? null,
       keyword: filters?.keyword?.trim() || "",
+      page: filters?.page,
+      limit: filters?.limit,
     };
     loading.value = true;
     error.value = null;
@@ -183,7 +235,13 @@ export const useDocumentationStore = defineStore("documentation", () => {
         params.projectId = normalizedFilters.projectId;
       }
       if (normalizedFilters.keyword) {
-        params.keyword = normalizedFilters.keyword;
+        params.search = normalizedFilters.keyword; // API 使用 search 而不是 keyword
+      }
+      if (normalizedFilters.page !== undefined) {
+        params.page = normalizedFilters.page;
+      }
+      if (normalizedFilters.limit !== undefined) {
+        params.limit = normalizedFilters.limit;
       }
 
       const response = await api.get<ApiResponse<unknown>>("/documentation", {
@@ -192,8 +250,8 @@ export const useDocumentationStore = defineStore("documentation", () => {
       const payload = unwrap(response);
       
       // 后端直接返回数组在 data 字段中
-      const rawEntries = extractEntries(payload.data);
-      const documentationEntries = rawEntries
+      const result = extractEntries(payload.data);
+      const documentationEntries = result.entries
         .map((item) => normalizeEntry(item))
         .sort(
           (a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
@@ -201,6 +259,13 @@ export const useDocumentationStore = defineStore("documentation", () => {
 
       entries.value = documentationEntries;
       lastSyncedAt.value = resolveGeneratedAt(payload.data, documentationEntries);
+      
+      return {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      };
     } catch (err) {
       error.value = err instanceof Error ? err.message : "获取文档数据失败";
       throw err;

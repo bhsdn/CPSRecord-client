@@ -134,7 +134,12 @@ export const useProjectsStore = defineStore("projects", () => {
     projects.value.find((project) => project.id === id && project.isActive);
 
   // 从后端获取全部项目列表，并刷新本地缓存
-  const fetchProjects = async (params?: { page?: number; limit?: number }) => {
+  const fetchProjects = async (params?: { 
+    page?: number; 
+    limit?: number;
+    search?: string;
+    categoryId?: number;
+  }) => {
     loading.value = true;
     try {
       const response = await api.get<ApiResponse<ProjectListApiData>>("/projects", {

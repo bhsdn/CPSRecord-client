@@ -4,8 +4,8 @@
   "metadata": {
     "version": "2.0.0",
     "description": "project 级资源注册表",
-    "createdAt": "2025-10-07T16:29:15.968Z",
-    "updatedAt": "2025-10-07T16:29:15.971Z",
+    "createdAt": "2025-10-07T17:02:26.676Z",
+    "updatedAt": "2025-10-07T17:02:26.681Z",
     "resourceCount": 1
   },
   "resources": [
@@ -17,9 +17,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/cps-dev-expert/cps-dev-expert.role.md",
       "metadata": {
-        "createdAt": "2025-10-07T16:29:15.970Z",
-        "updatedAt": "2025-10-07T16:29:15.970Z",
-        "scannedAt": "2025-10-07T16:29:15.970Z",
+        "createdAt": "2025-10-07T17:02:26.680Z",
+        "updatedAt": "2025-10-07T17:02:26.680Z",
+        "scannedAt": "2025-10-07T17:02:26.680Z",
         "path": "role/cps-dev-expert/cps-dev-expert.role.md"
       }
     }

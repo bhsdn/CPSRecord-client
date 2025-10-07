@@ -1,52 +1,69 @@
 <template>
-  <section class="space-y-6">
-    <el-card shadow="never">
-      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 class="text-2xl font-semibold text-slate-900">项目分类管理</h2>
-          <p class="text-sm text-slate-500">管理项目分类，支持分类的创建、编辑、排序和启停</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <el-radio-group v-model="statusFilter" size="small">
-            <el-radio-button value="all">全部 ({{ categories.length }})</el-radio-button>
-            <el-radio-button value="active">已启用 ({{ activeCount }})</el-radio-button>
-            <el-radio-button value="inactive">已停用 ({{ inactiveCount }})</el-radio-button>
-          </el-radio-group>
-          <el-button type="primary" @click="openCreateDialog">
-            <el-icon class="mr-1">
-              <Plus />
-            </el-icon>
-            新建分类
-          </el-button>
-        </div>
-      </div>
-    </el-card>
-
-    <el-alert v-if="loadError" type="error" :closable="false" class="w-full" title="分类列表加载失败">
-      <template #description>
-        <div class="flex flex-col gap-2">
-          <span>{{ loadError }}，请稍后重试或点击重新加载。</span>
-          <div class="flex flex-wrap gap-2">
-            <el-button size="small" type="primary" @click="loadCategories">重新加载</el-button>
+  <section class="category-management-container">
+    <div class="category-management-content">
+      <el-card shadow="never">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold text-slate-900">项目分类管理</h2>
+            <p class="text-sm text-slate-500">管理项目分类，支持分类的创建、编辑、排序和启停</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <el-radio-group v-model="statusFilter" size="small">
+              <el-radio-button value="all">全部 ({{ categories.length }})</el-radio-button>
+              <el-radio-button value="active">已启用 ({{ activeCount }})</el-radio-button>
+              <el-radio-button value="inactive">已停用 ({{ inactiveCount }})</el-radio-button>
+            </el-radio-group>
+            <el-button type="primary" @click="openCreateDialog">
+              <el-icon class="mr-1">
+                <Plus />
+              </el-icon>
+              新建分类
+            </el-button>
           </div>
         </div>
-      </template>
-    </el-alert>
+      </el-card>
 
-    <LoadingSpinner v-if="loading" text="分类数据加载中..." />
+      <el-alert v-if="loadError" type="error" :closable="false" class="w-full" title="分类列表加载失败">
+        <template #description>
+          <div class="flex flex-col gap-2">
+            <span>{{ loadError }}，请稍后重试或点击重新加载。</span>
+            <div class="flex flex-wrap gap-2">
+              <el-button size="small" type="primary" @click="loadCategories">重新加载</el-button>
+            </div>
+          </div>
+        </template>
+      </el-alert>
 
-    <div v-else-if="sortedCategories.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <ProjectCategoryCard
-        v-for="category in sortedCategories"
-        :key="category.id"
-        :category="category"
-        @edit="openEditDialog"
-        @delete="confirmDelete"
-        @toggle="handleToggle"
-      />
+      <LoadingSpinner v-if="loading" text="分类数据加载中..." />
+
+      <div v-else-if="sortedCategories.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ProjectCategoryCard
+          v-for="category in sortedCategories"
+          :key="category.id"
+          :category="category"
+          @edit="openEditDialog"
+          @delete="confirmDelete"
+          @toggle="handleToggle"
+        />
+      </div>
+
+      <el-empty v-else :description="emptyDescription" />
     </div>
 
-    <el-empty v-else :description="emptyDescription" />
+    <!-- 分页组件 - 固定在底部 -->
+    <div v-if="!loading && sortedCategories.length > 0" class="pagination-footer">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 30, 50]"
+        :total="totalCategories"
+        :layout="paginationLayout"
+        :small="isMobile"
+        class="justify-center"
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
   </section>
 
   <el-dialog :title="dialogTitle" :model-value="dialogVisible" width="520px" @close="closeDialog">
@@ -71,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { ElMessage } from 'element-plus';
 import { Plus, Collection } from '@element-plus/icons-vue';
@@ -198,10 +215,44 @@ const handleDelete = async () => {
   }
 };
 
+// 移动端检测
+const isMobile = ref(false);
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+};
+
+// 响应式分页布局
+const paginationLayout = computed(() => {
+  if (isMobile.value) {
+    return 'prev, pager, next';
+  }
+  return 'total, sizes, prev, pager, next, jumper';
+});
+
+// 分页相关
+const currentPage = ref(1);
+const pageSize = ref(20);
+const totalCategories = ref(0);
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  loadCategories();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  currentPage.value = 1;
+  loadCategories();
+};
+
 const loadCategories = async () => {
   loadError.value = null;
   try {
-    await projectCategoriesStore.fetchCategories();
+    const result = await projectCategoriesStore.fetchCategories(true, {
+      page: currentPage.value,
+      limit: pageSize.value,
+    });
+    totalCategories.value = result.total || categories.value.length;
   } catch (error) {
     const message = error instanceof Error ? error.message : '获取分类列表失败';
     loadError.value = message;
@@ -211,5 +262,90 @@ const loadCategories = async () => {
 
 onMounted(() => {
   loadCategories();
+
+  // 初始检测和监听窗口大小变化
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile);
 });
 </script>
+
+<style scoped>
+.category-management-container {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+}
+
+.category-management-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+}
+
+.pagination-footer {
+  margin-top: auto;
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-footer :deep(.el-pagination) {
+  padding: 0.5rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* 移动端优化 - 使用 MobileLayout 时 */
+@media (max-width: 768px) {
+  .category-management-container {
+    min-height: auto;
+    height: 100%;
+  }
+
+  .category-management-content {
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .pagination-footer {
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .pagination-footer :deep(.el-pagination) {
+    width: 100%;
+  }
+
+  .pagination-footer :deep(.el-pager) {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pagination-footer :deep(.el-pager li) {
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+    font-size: 13px;
+  }
+
+  .pagination-footer :deep(.btn-prev),
+  .pagination-footer :deep(.btn-next) {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+  }
+}
+</style>
