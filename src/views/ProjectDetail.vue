@@ -6,11 +6,8 @@
           <div class="flex-1 min-w-0">
             <h2 class="text-2xl font-semibold text-slate-900">{{ project.name }}</h2>
             <div class="description-wrapper">
-              <p
-                ref="descriptionRef"
-                class="text-sm text-slate-500 description-text"
-                :class="{ 'line-clamp-2': !isDescriptionExpanded }"
-              >
+              <p ref="descriptionRef" class="text-sm text-slate-500 description-text"
+                :class="{ 'line-clamp-2': !isDescriptionExpanded }">
                 {{ project.description || '暂无描述' }}
               </p>
               <button v-if="showExpandButton" class="expand-button text-xs mt-1" @click.stop="toggleDescription">
@@ -24,19 +21,27 @@
           </div>
           <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 md:flex-shrink-0">
             <span class="flex items-center gap-1 whitespace-nowrap">
-              <el-icon><Timer /></el-icon>
+              <el-icon>
+                <Timer />
+              </el-icon>
               更新于 {{ formatDate(project.updatedAt) }}
             </span>
             <span class="flex items-center gap-1 whitespace-nowrap">
-              <el-icon><CollectionTag /></el-icon>
+              <el-icon>
+                <CollectionTag />
+              </el-icon>
               子项目 {{ subProjects.length }}
             </span>
             <span class="flex items-center gap-1 whitespace-nowrap">
-              <el-icon><Tickets /></el-icon>
+              <el-icon>
+                <Tickets />
+              </el-icon>
               文字口令 {{ commandTotal }}
             </span>
             <span class="flex items-center gap-1 whitespace-nowrap">
-              <el-icon><DocumentCopy /></el-icon>
+              <el-icon>
+                <DocumentCopy />
+              </el-icon>
               文档 {{ project.documentationCount }}
             </span>
           </div>
@@ -46,15 +51,21 @@
 
     <el-card shadow="never" body-class="flex flex-wrap gap-3">
       <el-button type="primary" @click="openSubProjectDialog()">
-        <el-icon class="mr-1"><Plus /></el-icon>
+        <el-icon class="mr-1">
+          <Plus />
+        </el-icon>
         新建子项目
       </el-button>
       <el-button type="primary" plain @click="openSortDialog" :disabled="!subProjects.length">
-        <el-icon class="mr-1"><Rank /></el-icon>
+        <el-icon class="mr-1">
+          <Rank />
+        </el-icon>
         调整排序
       </el-button>
       <el-button type="primary" plain @click="openContentTypePage">
-        <el-icon class="mr-1"><Setting /></el-icon>
+        <el-icon class="mr-1">
+          <Setting />
+        </el-icon>
         内容类型配置
       </el-button>
     </el-card>
@@ -70,48 +81,26 @@
       </template>
     </el-alert>
 
-    <SubProjectList
-      :sub-projects="subProjects"
-      :loading="subProjectLoading"
-      @edit="openSubProjectDialog"
-      @delete="confirmDeleteSubProject"
-      @add-content="openContentDialog"
-      @edit-content="(sub, content) => openContentDialog(sub, content)"
-      @add-command="openCommandDialog"
-      @edit-command="(sub, command) => openCommandDialog(sub, command)"
-      @delete-command="confirmDeleteCommand"
-      @toggle-documentation="handleToggleDocumentation"
-    />
+    <SubProjectList :sub-projects="subProjects" :loading="subProjectLoading" @edit="openSubProjectDialog"
+      @delete="confirmDeleteSubProject" @add-content="openContentDialog"
+      @edit-content="(sub, content) => openContentDialog(sub, content)" @add-command="openCommandDialog"
+      @edit-command="(sub, command) => openCommandDialog(sub, command)" @delete-command="confirmDeleteCommand"
+      @toggle-documentation="handleToggleDocumentation" />
   </section>
   <el-empty v-else description="项目不存在或已被删除">
     <el-button type="primary" @click="router.push('/projects')">返回项目列表</el-button>
   </el-empty>
 
-  <el-dialog
-    :title="subProjectDialogTitle"
-    :model-value="subProjectDialogVisible"
-    width="520px"
-    @close="closeSubProjectDialog"
-  >
-    <SubProjectForm
-      :model-value="editingSubProject"
-      :submit-text="editingSubProject ? '保存修改' : '创建子项目'"
-      :submitting="submitting"
-      @submit="handleSubProjectSubmit"
-      @cancel="closeSubProjectDialog"
-    />
+  <el-dialog :title="subProjectDialogTitle" :model-value="subProjectDialogVisible" width="520px"
+    @close="closeSubProjectDialog">
+    <SubProjectForm :model-value="editingSubProject" :submit-text="editingSubProject ? '保存修改' : '创建子项目'"
+      :submitting="submitting" @submit="handleSubProjectSubmit" @cancel="closeSubProjectDialog" />
   </el-dialog>
 
   <el-dialog :title="contentDialogTitle" :model-value="contentDialogVisible" width="560px" @close="closeContentDialog">
-    <ContentEditor
-      v-if="contentDialogVisible"
-      :content-types="contentTypes"
-      :model-value="editingContent"
-      :submit-text="editingContent ? '保存内容' : '新增内容'"
-      :submitting="submitting"
-      @submit="handleContentSubmit"
-      @cancel="closeContentDialog"
-    />
+    <ContentEditor v-if="contentDialogVisible" :content-types="contentTypes" :model-value="editingContent"
+      :submit-text="editingContent ? '保存内容' : '新增内容'" :submitting="submitting" @submit="handleContentSubmit"
+      @cancel="closeContentDialog" />
   </el-dialog>
 
   <el-dialog title="文字口令" :model-value="commandDialogVisible" width="520px" @close="closeCommandDialog">
@@ -134,33 +123,16 @@
   </el-dialog>
 
   <el-dialog title="调整子项目排序" :model-value="sortDialogVisible" width="640px" @close="closeSortDialog">
-    <SubProjectSort
-      :model-value="subProjects"
-      :submitting="submitting"
-      @update="handleSortUpdate"
-      @cancel="closeSortDialog"
-    />
+    <SubProjectSort :model-value="subProjects" :submitting="submitting" @update="handleSortUpdate"
+      @cancel="closeSortDialog" />
   </el-dialog>
 
-  <ConfirmDialog
-    :visible="deleteSubProjectDialogVisible"
-    title="删除子项目"
-    description="删除后该子项目及内容将被隐藏，确认继续？"
-    confirm-text="确认删除"
-    :loading="submitting"
-    @confirm="handleSubProjectDelete"
-    @cancel="deleteSubProjectDialogVisible = false"
-  />
+  <ConfirmDialog :visible="deleteSubProjectDialogVisible" title="删除子项目" description="删除后该子项目及内容将被隐藏，确认继续？"
+    confirm-text="确认删除" :loading="submitting" @confirm="handleSubProjectDelete"
+    @cancel="deleteSubProjectDialogVisible = false" />
 
-  <ConfirmDialog
-    :visible="deleteCommandDialogVisible"
-    title="删除文字口令"
-    description="确认删除该文字口令吗？"
-    confirm-text="确认删除"
-    :loading="submitting"
-    @confirm="handleCommandDelete"
-    @cancel="deleteCommandDialogVisible = false"
-  />
+  <ConfirmDialog :visible="deleteCommandDialogVisible" title="删除文字口令" description="确认删除该文字口令吗？" confirm-text="确认删除"
+    :loading="submitting" @confirm="handleCommandDelete" @cancel="deleteCommandDialogVisible = false" />
 </template>
 
 <script setup lang="ts">
@@ -384,6 +356,7 @@ const handleContentSubmit = async (payload: {
   contentValue: string;
   expiryDays?: number;
   uploadedImageId?: number;
+  showInDocumentation?: boolean;
 }) => {
   if (!targetSubProject.value) return;
   submitting.value = true;

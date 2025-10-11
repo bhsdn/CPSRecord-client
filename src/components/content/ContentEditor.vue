@@ -8,12 +8,8 @@
       </el-form-item>
 
       <el-form-item v-if="selectedContentType?.fieldType === 'text'" label="内容" prop="contentValue">
-        <el-input
-          v-model="formData.contentValue"
-          type="textarea"
-          :autosize="{ minRows: 3, maxRows: 6 }"
-          placeholder="请输入文本内容"
-        />
+        <el-input v-model="formData.contentValue" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }"
+          placeholder="请输入文本内容" />
       </el-form-item>
 
       <el-form-item v-else-if="selectedContentType?.fieldType === 'url'" label="链接" prop="contentValue">
@@ -22,15 +18,8 @@
 
       <el-form-item v-else-if="selectedContentType?.fieldType === 'image'" label="图片" prop="contentValue">
         <div class="w-full">
-          <el-upload
-            class="upload-demo"
-            drag
-            :auto-upload="false"
-            accept="image/*"
-            :show-file-list="false"
-            :on-change="handleImageChange"
-            :before-upload="beforeImageUpload"
-          >
+          <el-upload class="upload-demo" drag :auto-upload="false" accept="image/*" :show-file-list="false"
+            :on-change="handleImageChange" :before-upload="beforeImageUpload">
             <el-icon v-if="!imagePreview && !imageUploading" class="el-icon--upload text-4xl">
               <UploadFilled />
             </el-icon>
@@ -62,6 +51,15 @@
       <el-form-item v-if="selectedContentType?.hasExpiry" label="有效天数" prop="expiryDays">
         <el-input-number v-model="formData.expiryDays" :min="1" :max="180" />
         <span class="ml-3 text-xs text-slate-500">预估到期：{{ calculatedExpiryDate }}</span>
+      </el-form-item>
+
+      <el-form-item label="显示在文档中">
+        <div class="flex items-center gap-3">
+          <el-switch v-model="formData.showInDocumentation" />
+          <span class="text-xs text-slate-500">
+            {{ formData.showInDocumentation ? '内容将在文档中心显示' : '内容不会在文档中心显示' }}
+          </span>
+        </div>
       </el-form-item>
 
       <div class="flex justify-end gap-3 pt-2">
@@ -98,7 +96,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (
     e: 'submit',
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
+    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number; showInDocumentation?: boolean }
   ): void;
   (e: 'cancel'): void;
 }>();
@@ -108,6 +106,7 @@ const formData = ref({
   contentTypeId: undefined as number | undefined,
   contentValue: '',
   expiryDays: undefined as number | undefined,
+  showInDocumentation: true, // 默认显示在文档中
 });
 
 const { uploading: imageUploading, uploadProgress, uploadImage, validateImage } = useImageUpload();
@@ -175,6 +174,7 @@ watch(
         contentTypeId: value.contentType.id,
         contentValue: value.contentValue,
         expiryDays: value.expiryDays,
+        showInDocumentation: value.showInDocumentation ?? true, // 默认值为 true
       };
       // 如果是图片类型，设置预览和图片信息
       if (value.contentType.fieldType === 'image' && value.contentValue) {
@@ -205,6 +205,7 @@ watch(
         contentTypeId: undefined,
         contentValue: '',
         expiryDays: undefined,
+        showInDocumentation: true, // 新内容默认显示在文档中
       };
       imagePreview.value = '';
       imageInfo.value = null;
@@ -216,6 +217,7 @@ watch(
 const handleContentTypeChange = () => {
   formData.value.contentValue = '';
   formData.value.expiryDays = undefined;
+  formData.value.showInDocumentation = true; // 保持默认值
   imagePreview.value = '';
   imageInfo.value = null;
 };
@@ -271,10 +273,12 @@ const handleSubmit = async () => {
       contentValue: string;
       expiryDays?: number;
       uploadedImageId?: number;
+      showInDocumentation?: boolean;
     } = {
       contentTypeId: formData.value.contentTypeId,
       contentValue: formData.value.contentValue.trim(),
       expiryDays: formData.value.expiryDays,
+      showInDocumentation: formData.value.showInDocumentation,
     };
 
     // 如果是图片类型且有图片ID，添加 uploadedImageId

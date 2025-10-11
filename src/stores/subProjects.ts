@@ -1,6 +1,11 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { ContentType, SubProject, SubProjectContent, TextCommand } from "@/types";
+import type {
+  ContentType,
+  SubProject,
+  SubProjectContent,
+  TextCommand,
+} from "@/types";
 import type { ApiResponse } from "@/types/api";
 import { api, unwrap } from "@/utils/api";
 import { getExpiryStatus } from "@/utils/date";
@@ -20,6 +25,7 @@ type RawSubProjectContent = SubProjectContent & {
   uploaded_image?: any;
   expiry_days?: number;
   expiry_date?: string;
+  show_in_documentation?: boolean;
   created_at?: string;
   updated_at?: string;
 };
@@ -50,16 +56,20 @@ type RawSubProject = SubProject & {
 const normalizeContentType = (raw?: Partial<RawContentType>): ContentType => ({
   id: Number(raw?.id ?? 0),
   name: raw?.name ?? "",
-  fieldType: (raw?.fieldType ?? raw?.field_type ?? "text") as ContentType["fieldType"],
+  fieldType: (raw?.fieldType ??
+    raw?.field_type ??
+    "text") as ContentType["fieldType"],
   hasExpiry: raw?.hasExpiry ?? raw?.has_expiry ?? false,
   isSystem: raw?.isSystem ?? raw?.is_system ?? false,
   description: raw?.description ?? undefined,
 });
 
-const normalizeContent = (raw: Partial<RawSubProjectContent>): SubProjectContent => {
+const normalizeContent = (
+  raw: Partial<RawSubProjectContent>
+): SubProjectContent => {
   const expiryDate = raw.expiryDate ?? raw.expiry_date;
   const uploadedImage = raw.uploadedImage ?? raw.uploaded_image;
-  
+
   return {
     id: Number(raw.id),
     subProjectId: raw.subProjectId ?? raw.sub_project_id ?? 0,
@@ -75,14 +85,17 @@ const normalizeContent = (raw: Partial<RawSubProjectContent>): SubProjectContent
           height: uploadedImage.height,
           size: uploadedImage.size,
           links: uploadedImage.links || {
-            url: uploadedImage.url || '',
-            thumbnail_url: uploadedImage.thumbnailUrl || uploadedImage.thumbnail_url || '',
+            url: uploadedImage.url || "",
+            thumbnail_url:
+              uploadedImage.thumbnailUrl || uploadedImage.thumbnail_url || "",
           },
         }
       : undefined,
     expiryDays: raw.expiryDays ?? raw.expiry_days,
     expiryDate,
     expiryStatus: raw.expiryStatus ?? getExpiryStatus(expiryDate ?? undefined),
+    showInDocumentation:
+      raw.showInDocumentation ?? raw.show_in_documentation ?? true, // 默认显示在文档中
     createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
     updatedAt: raw.updatedAt ?? raw.updated_at ?? new Date().toISOString(),
   };
@@ -110,10 +123,16 @@ const normalizeSubProject = (raw: Partial<RawSubProject>): SubProject => ({
   description: raw.description ?? "",
   sortOrder: raw.sortOrder ?? raw.sort_order ?? 0,
   documentationEnabled:
-    raw.documentationEnabled ?? raw.enable_documentation ?? raw.documentation_enabled ?? false,
-  documentationGeneratedAt: raw.documentationGeneratedAt ?? raw.documentation_generated_at ?? null,
+    raw.documentationEnabled ??
+    raw.enable_documentation ??
+    raw.documentation_enabled ??
+    false,
+  documentationGeneratedAt:
+    raw.documentationGeneratedAt ?? raw.documentation_generated_at ?? null,
   contents: (raw.contents ?? []).map((item) => normalizeContent(item)),
-  textCommands: (raw.textCommands ?? raw.text_commands ?? []).map((item) => normalizeCommand(item)),
+  textCommands: (raw.textCommands ?? raw.text_commands ?? []).map((item) =>
+    normalizeCommand(item)
+  ),
   createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
   updatedAt: raw.updatedAt ?? raw.updated_at ?? new Date().toISOString(),
   isActive: raw.isActive ?? raw.is_active ?? true,
@@ -125,7 +144,9 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
 
   // 工具方法：写入或更新子项目，保持响应式引用不变
   const upsertSubProject = (subProject: SubProject) => {
-    const index = subProjects.value.findIndex((item) => item.id === subProject.id);
+    const index = subProjects.value.findIndex(
+      (item) => item.id === subProject.id
+    );
     if (index >= 0) {
       subProjects.value.splice(index, 1, subProject);
     } else {
@@ -134,8 +155,13 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   };
 
   // 将同一项目下的子项目集合整体替换，便于批量刷新
-  const replaceProjectSubProjects = (projectId: number, items: SubProject[]) => {
-    const others = subProjects.value.filter((item) => item.projectId !== projectId);
+  const replaceProjectSubProjects = (
+    projectId: number,
+    items: SubProject[]
+  ) => {
+    const others = subProjects.value.filter(
+      (item) => item.projectId !== projectId
+    );
     subProjects.value = [...others, ...items];
   };
 
@@ -156,21 +182,29 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
   const getSubProjectById = (id: number) =>
-    subProjects.value.find((subProject) => subProject.id === id && subProject.isActive);
+    subProjects.value.find(
+      (subProject) => subProject.id === id && subProject.isActive
+    );
 
   // 根据项目 ID 拉取子项目列表，包含嵌套的内容与口令信息
   const fetchSubProjectsByProject = async (projectId: number) => {
     loading.value = true;
     try {
-      const response = await api.get<ApiResponse<RawSubProject[]>>("/sub-projects", {
-        params: { projectId },
-      });
+      const response = await api.get<ApiResponse<RawSubProject[]>>(
+        "/sub-projects",
+        {
+          params: { projectId },
+        }
+      );
       const payload = unwrap(response);
-      const items = parseSubProjectArray(payload.data).map((item) => normalizeSubProject(item));
+      const items = parseSubProjectArray(payload.data).map((item) =>
+        normalizeSubProject(item)
+      );
       replaceProjectSubProjects(projectId, items);
       return items;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "获取子项目列表失败";
+      const message =
+        error instanceof Error ? error.message : "获取子项目列表失败";
       throw new Error(message || "获取子项目列表失败");
     } finally {
       loading.value = false;
@@ -179,17 +213,23 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
 
   // 创建子项目并同步更新项目统计
   const createSubProject = async (
-    payload: Pick<SubProject, "name" | "description" | "sortOrder" | "documentationEnabled"> & {
+    payload: Pick<
+      SubProject,
+      "name" | "description" | "sortOrder" | "documentationEnabled"
+    > & {
       projectId: number;
     }
   ) => {
-    const response = await api.post<ApiResponse<RawSubProject>>("/sub-projects", {
-      projectId: payload.projectId,
-      name: payload.name,
-      description: payload.description,
-      sortOrder: payload.sortOrder,
-      documentationEnabled: payload.documentationEnabled,
-    });
+    const response = await api.post<ApiResponse<RawSubProject>>(
+      "/sub-projects",
+      {
+        projectId: payload.projectId,
+        name: payload.name,
+        description: payload.description,
+        sortOrder: payload.sortOrder,
+        documentationEnabled: payload.documentationEnabled,
+      }
+    );
     const body = unwrap(response);
     if (!body.data) throw new Error("创建子项目失败");
     const subProject = normalizeSubProject(body.data);
@@ -204,10 +244,13 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
     payload: Partial<SubProject> & { documentationEnabled?: boolean }
   ) => {
     const { documentationEnabled, ...rest } = payload;
-    const response = await api.put<ApiResponse<RawSubProject>>(`/sub-projects/${id}`, {
-      ...rest,
-      ...(documentationEnabled !== undefined ? { documentationEnabled } : {}),
-    });
+    const response = await api.put<ApiResponse<RawSubProject>>(
+      `/sub-projects/${id}`,
+      {
+        ...rest,
+        ...(documentationEnabled !== undefined ? { documentationEnabled } : {}),
+      }
+    );
     const body = unwrap(response);
     if (!body.data) throw new Error("更新子项目失败");
     const subProject = normalizeSubProject(body.data);
@@ -227,12 +270,14 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   };
 
   // 将拖拽后的排序结果提交到后端，返回最新顺序
-  const reorderSubProjects = async (projectId: number, orderedIds: number[]) => {
+  const reorderSubProjects = async (
+    projectId: number,
+    orderedIds: number[]
+  ) => {
     const items = orderedIds.map((id, index) => ({ id, sortOrder: index + 1 }));
-    const response = await api.post<ApiResponse<RawSubProject[] | { items: RawSubProject[] }>>(
-      `/sub-projects/reorder`,
-      { items }
-    );
+    const response = await api.post<
+      ApiResponse<RawSubProject[] | { items: RawSubProject[] }>
+    >(`/sub-projects/reorder`, { items });
     const body = unwrap(response);
     const orderedList = parseSubProjectArray(body.data);
     if (orderedList.length) {
@@ -241,7 +286,9 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
       return ordered;
     }
     orderedIds.forEach((subProjectId, index) => {
-      const subProject = subProjects.value.find((item) => item.id === subProjectId);
+      const subProject = subProjects.value.find(
+        (item) => item.id === subProjectId
+      );
       if (subProject && subProject.projectId === projectId) {
         subProject.sortOrder = index + 1;
       }
@@ -252,18 +299,31 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   // 新增内容条目，依赖服务端计算到期状态
   const addContentToSubProject = async (
     subProjectId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
+    payload: {
+      contentTypeId: number;
+      contentValue: string;
+      expiryDays?: number;
+      uploadedImageId?: number;
+      showInDocumentation?: boolean;
+    }
   ) => {
-    const response = await api.post<ApiResponse<RawSubProjectContent>>("/contents", {
-      subProjectId,
-      ...payload,
-    });
+    const response = await api.post<ApiResponse<RawSubProjectContent>>(
+      "/contents",
+      {
+        subProjectId,
+        ...payload,
+      }
+    );
     const body = unwrap(response);
     if (!body.data) throw new Error("新增内容失败");
     const content = normalizeContent(body.data);
-    const subProject = subProjects.value.find((item) => item.id === subProjectId);
+    const subProject = subProjects.value.find(
+      (item) => item.id === subProjectId
+    );
     if (subProject) {
-      const index = subProject.contents.findIndex((item) => item.id === content.id);
+      const index = subProject.contents.findIndex(
+        (item) => item.id === content.id
+      );
       if (index >= 0) {
         subProject.contents.splice(index, 1, content);
       } else {
@@ -278,18 +338,31 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   const updateContentInSubProject = async (
     subProjectId: number,
     contentId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
+    payload: {
+      contentTypeId: number;
+      contentValue: string;
+      expiryDays?: number;
+      uploadedImageId?: number;
+      showInDocumentation?: boolean;
+    }
   ) => {
-    const response = await api.put<ApiResponse<RawSubProjectContent>>(`/contents/${contentId}`, {
-      subProjectId,
-      ...payload,
-    });
+    const response = await api.put<ApiResponse<RawSubProjectContent>>(
+      `/contents/${contentId}`,
+      {
+        subProjectId,
+        ...payload,
+      }
+    );
     const body = unwrap(response);
     if (!body.data) throw new Error("更新内容失败");
     const content = normalizeContent(body.data);
-    const subProject = subProjects.value.find((item) => item.id === subProjectId);
+    const subProject = subProjects.value.find(
+      (item) => item.id === subProjectId
+    );
     if (subProject) {
-      const index = subProject.contents.findIndex((item) => item.id === content.id);
+      const index = subProject.contents.findIndex(
+        (item) => item.id === content.id
+      );
       if (index >= 0) {
         subProject.contents.splice(index, 1, content);
       } else {
@@ -301,11 +374,18 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   };
 
   // 删除内容后手动移除本地缓存，方便界面即时刷新
-  const removeContentFromSubProject = async (subProjectId: number, contentId: number) => {
+  const removeContentFromSubProject = async (
+    subProjectId: number,
+    contentId: number
+  ) => {
     await api.delete<ApiResponse<null>>(`/contents/${contentId}`);
-    const subProject = subProjects.value.find((item) => item.id === subProjectId);
+    const subProject = subProjects.value.find(
+      (item) => item.id === subProjectId
+    );
     if (!subProject) return;
-    subProject.contents = subProject.contents.filter((item) => item.id !== contentId);
+    subProject.contents = subProject.contents.filter(
+      (item) => item.id !== contentId
+    );
     subProject.updatedAt = new Date().toISOString();
   };
 
@@ -316,11 +396,14 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   ) => {
     let response;
     if (payload.id) {
-      response = await api.put<ApiResponse<RawTextCommand>>(`/text-commands/${payload.id}`, {
-        subProjectId,
-        commandText: payload.commandText,
-        expiryDays: payload.expiryDays,
-      });
+      response = await api.put<ApiResponse<RawTextCommand>>(
+        `/text-commands/${payload.id}`,
+        {
+          subProjectId,
+          commandText: payload.commandText,
+          expiryDays: payload.expiryDays,
+        }
+      );
     } else {
       response = await api.post<ApiResponse<RawTextCommand>>("/text-commands", {
         subProjectId,
@@ -331,9 +414,13 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
     const body = unwrap(response);
     if (!body.data) throw new Error("保存口令失败");
     const command = normalizeCommand(body.data);
-    const subProject = subProjects.value.find((item) => item.id === subProjectId);
+    const subProject = subProjects.value.find(
+      (item) => item.id === subProjectId
+    );
     if (subProject) {
-      const index = subProject.textCommands.findIndex((item) => item.id === command.id);
+      const index = subProject.textCommands.findIndex(
+        (item) => item.id === command.id
+      );
       if (index >= 0) {
         subProject.textCommands.splice(index, 1, command);
       } else {
@@ -347,9 +434,13 @@ export const useSubProjectsStore = defineStore("subProjects", () => {
   // 删除口令后更新本地缓存
   const removeTextCommand = async (subProjectId: number, commandId: number) => {
     await api.delete<ApiResponse<null>>(`/text-commands/${commandId}`);
-    const subProject = subProjects.value.find((item) => item.id === subProjectId);
+    const subProject = subProjects.value.find(
+      (item) => item.id === subProjectId
+    );
     if (!subProject) return;
-    subProject.textCommands = subProject.textCommands.filter((item) => item.id !== commandId);
+    subProject.textCommands = subProject.textCommands.filter(
+      (item) => item.id !== commandId
+    );
     subProject.updatedAt = new Date().toISOString();
   };
 

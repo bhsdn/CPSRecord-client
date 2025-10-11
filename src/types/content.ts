@@ -30,6 +30,7 @@ export interface SubProjectContent {
   expiryDays?: number;
   expiryDate?: string;
   expiryStatus?: "safe" | "warning" | "danger";
+  showInDocumentation?: boolean; // 是否在文档中显示
   createdAt: string;
   updatedAt: string;
 }

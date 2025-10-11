@@ -16,7 +16,9 @@ type RawContentType = ContentType & {
 const normalizeContentType = (raw: Partial<RawContentType>): ContentType => ({
   id: Number(raw.id),
   name: raw.name ?? "",
-  fieldType: (raw.fieldType ?? raw.field_type ?? "text") as ContentType["fieldType"],
+  fieldType: (raw.fieldType ??
+    raw.field_type ??
+    "text") as ContentType["fieldType"],
   hasExpiry: raw.hasExpiry ?? raw.has_expiry ?? false,
   isSystem: raw.isSystem ?? raw.is_system ?? false,
   description: raw.description ?? undefined,
@@ -30,20 +32,22 @@ export const useContentsStore = defineStore("contents", () => {
   const fetchContentTypes = async () => {
     loading.value = true;
     try {
-      const response = await api.get<ApiResponse<ContentType[] | { items: ContentType[] }>>(
-        "/content-types"
-      );
+      const response = await api.get<
+        ApiResponse<ContentType[] | { items: ContentType[] }>
+      >("/content-types");
       const payload = unwrap(response);
       const dataSource = Array.isArray(payload.data)
         ? payload.data
-        : (payload.data && typeof payload.data === "object" &&
-            Array.isArray((payload.data as { items?: ContentType[] }).items)
-            ? (payload.data as { items?: ContentType[] }).items
-            : []);
+        : payload.data &&
+          typeof payload.data === "object" &&
+          Array.isArray((payload.data as { items?: ContentType[] }).items)
+        ? (payload.data as { items?: ContentType[] }).items
+        : [];
       contentTypes.value = dataSource.map((item) => normalizeContentType(item));
       return contentTypes.value;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "获取内容类型失败";
+      const message =
+        error instanceof Error ? error.message : "获取内容类型失败";
       throw new Error(message || "获取内容类型失败");
     } finally {
       loading.value = false;
@@ -52,9 +56,15 @@ export const useContentsStore = defineStore("contents", () => {
 
   // 新增内容类型后追加到列表中，方便即时管理
   const createContentType = async (
-    payload: Pick<ContentType, "name" | "fieldType" | "hasExpiry" | "description">
+    payload: Pick<
+      ContentType,
+      "name" | "fieldType" | "hasExpiry" | "description"
+    >
   ) => {
-    const response = await api.post<ApiResponse<ContentType>>("/content-types", payload);
+    const response = await api.post<ApiResponse<ContentType>>(
+      "/content-types",
+      payload
+    );
     const body = unwrap(response);
     if (!body.data) throw new Error("创建内容类型失败");
     const contentType = normalizeContentType(body.data);
@@ -63,8 +73,14 @@ export const useContentsStore = defineStore("contents", () => {
   };
 
   // 更新内容类型时以服务端结果为准，避免字段差异
-  const updateContentType = async (id: number, payload: Partial<ContentType>) => {
-    const response = await api.put<ApiResponse<ContentType>>(`/content-types/${id}`, payload);
+  const updateContentType = async (
+    id: number,
+    payload: Partial<ContentType>
+  ) => {
+    const response = await api.put<ApiResponse<ContentType>>(
+      `/content-types/${id}`,
+      payload
+    );
     const body = unwrap(response);
     if (!body.data) throw new Error("更新内容类型失败");
     const updated = normalizeContentType(body.data);
@@ -86,7 +102,13 @@ export const useContentsStore = defineStore("contents", () => {
   // 内容相关操作直接委托给子项目仓库，保持数据一致性
   const addContent = async (
     subProjectId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
+    payload: {
+      contentTypeId: number;
+      contentValue: string;
+      expiryDays?: number;
+      uploadedImageId?: number;
+      showInDocumentation?: boolean;
+    }
   ) => {
     const subProjectsStore = useSubProjectsStore();
     return subProjectsStore.addContentToSubProject(subProjectId, payload);
@@ -95,15 +117,28 @@ export const useContentsStore = defineStore("contents", () => {
   const updateContent = async (
     subProjectId: number,
     contentId: number,
-    payload: { contentTypeId: number; contentValue: string; expiryDays?: number; uploadedImageId?: number }
+    payload: {
+      contentTypeId: number;
+      contentValue: string;
+      expiryDays?: number;
+      uploadedImageId?: number;
+      showInDocumentation?: boolean;
+    }
   ) => {
     const subProjectsStore = useSubProjectsStore();
-    return subProjectsStore.updateContentInSubProject(subProjectId, contentId, payload);
+    return subProjectsStore.updateContentInSubProject(
+      subProjectId,
+      contentId,
+      payload
+    );
   };
 
   const removeContent = async (subProjectId: number, contentId: number) => {
     const subProjectsStore = useSubProjectsStore();
-    return subProjectsStore.removeContentFromSubProject(subProjectId, contentId);
+    return subProjectsStore.removeContentFromSubProject(
+      subProjectId,
+      contentId
+    );
   };
 
   const addTextCommand = async (
@@ -120,7 +155,10 @@ export const useContentsStore = defineStore("contents", () => {
     payload: { commandText: string; expiryDays: number }
   ) => {
     const subProjectsStore = useSubProjectsStore();
-    return subProjectsStore.upsertTextCommand(subProjectId, { id: commandId, ...payload });
+    return subProjectsStore.upsertTextCommand(subProjectId, {
+      id: commandId,
+      ...payload,
+    });
   };
 
   const removeTextCommand = async (subProjectId: number, commandId: number) => {
@@ -133,7 +171,9 @@ export const useContentsStore = defineStore("contents", () => {
     const subProject = subProjectsStore.getSubProjectById(subProjectId);
     if (!subProject) return { total: 0, expiringSoon: 0 };
     const expiringSoon = subProject.contents.filter((content) =>
-      content.expiryDate ? getExpiryStatus(content.expiryDate) !== "safe" : false
+      content.expiryDate
+        ? getExpiryStatus(content.expiryDate) !== "safe"
+        : false
     ).length;
     return {
       total: subProject.contents.length,

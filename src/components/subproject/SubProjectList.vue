@@ -27,11 +27,15 @@
               <div class="flex items-center gap-4 flex-shrink-0 flex-wrap md:flex-nowrap">
                 <div class="flex items-center gap-3 text-xs text-slate-500">
                   <span class="flex items-center gap-1 whitespace-nowrap">
-                    <el-icon><Document /></el-icon>
+                    <el-icon>
+                      <Document />
+                    </el-icon>
                     内容 {{ subProject.contents.length }}
                   </span>
                   <span class="flex items-center gap-1 whitespace-nowrap">
-                    <el-icon><Tickets /></el-icon>
+                    <el-icon>
+                      <Tickets />
+                    </el-icon>
                     口令 {{ subProject.textCommands.length }}
                   </span>
                 </div>
@@ -39,12 +43,8 @@
                   <el-tag :type="subProject.documentationEnabled ? 'success' : 'info'" size="small">
                     文档{{ subProject.documentationEnabled ? '已开启' : '未开启' }}
                   </el-tag>
-                  <el-switch
-                    :model-value="subProject.documentationEnabled"
-                    size="small"
-                    @click.stop
-                    @change="(value: boolean) => emit('toggle-documentation', subProject, value)"
-                  />
+                  <el-switch :model-value="subProject.documentationEnabled" size="small" @click.stop
+                    @change="(value) => emit('toggle-documentation', subProject, value)" />
                 </div>
               </div>
             </div>
@@ -55,21 +55,27 @@
               <div class="flex items-center justify-between">
                 <h4 class="text-sm font-semibold text-slate-700">内容列表</h4>
                 <el-button type="primary" link @click="emit('add-content', subProject)">
-                  <el-icon class="mr-1"><Plus /></el-icon>
+                  <el-icon class="mr-1">
+                    <Plus />
+                  </el-icon>
                   新增内容
                 </el-button>
               </div>
               <el-empty v-if="!subProject.contents.length" description="暂无内容" :image-size="100" />
               <div v-else class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                <div
-                  v-for="content in subProject.contents"
-                  :key="content.id"
-                  class="rounded-lg border border-slate-200 p-3 hover:border-primary-200 transition-colors"
-                >
+                <div v-for="content in subProject.contents" :key="content.id"
+                  class="rounded-lg border border-slate-200 p-3 hover:border-primary-200 transition-colors">
                   <div class="flex items-center justify-between text-sm mb-2">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                       <el-tag size="small" effect="dark">{{ content.contentType.name }}</el-tag>
                       <ExpiryStatus v-if="content.expiryDate" :expiry-date="content.expiryDate" size="small" />
+                      <el-tag v-if="subProject.documentationEnabled && content.showInDocumentation === false"
+                        size="small" type="warning" title="该内容不会在文档中心显示">
+                        <el-icon class="mr-1">
+                          <View />
+                        </el-icon>
+                        文档隐藏
+                      </el-tag>
                     </div>
                     <el-button type="text" size="small" @click="emit('edit-content', subProject, content)">
                       编辑
@@ -79,14 +85,8 @@
                   <!-- 图片类型：显示预览图 -->
                   <div v-if="content.contentType.fieldType === 'image'" class="space-y-2">
                     <div class="flex items-center justify-center w-full bg-slate-50 rounded p-3">
-                      <el-image
-                        :src="content.contentValue"
-                        :style="getImagePreviewStyle(content)"
-                        fit="fill"
-                        class="rounded shadow-sm cursor-pointer"
-                        :preview-src-list="[content.contentValue]"
-                        lazy
-                      >
+                      <el-image :src="content.contentValue" :style="getImagePreviewStyle(content)" fit="fill"
+                        class="rounded shadow-sm cursor-pointer" :preview-src-list="[content.contentValue]" lazy>
                         <template #error>
                           <div class="flex items-center justify-center h-32 text-slate-400">
                             <span class="text-sm">图片加载失败</span>
@@ -115,24 +115,25 @@
               <div class="flex items-center justify-between">
                 <h4 class="text-sm font-semibold text-slate-700">文字口令</h4>
                 <el-button type="primary" link @click="emit('add-command', subProject)">
-                  <el-icon class="mr-1"><ChatLineSquare /></el-icon>
+                  <el-icon class="mr-1">
+                    <ChatLineSquare />
+                  </el-icon>
                   新增口令
                 </el-button>
               </div>
               <el-empty v-if="!subProject.textCommands.length" description="暂无口令" :image-size="100" />
               <div v-else class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                <div
-                  v-for="command in subProject.textCommands"
-                  :key="command.id"
-                  class="rounded-lg border border-slate-200 p-3"
-                >
+                <div v-for="command in subProject.textCommands" :key="command.id"
+                  class="rounded-lg border border-slate-200 p-3">
                   <div class="flex items-center justify-between text-sm">
                     <span class="font-medium text-slate-700">{{ command.commandText }}</span>
                     <div class="flex items-center gap-2">
                       <ExpiryStatus :expiry-date="command.expiryDate" size="small" />
                       <el-dropdown @command="cmd => handleCommandAction(cmd, subProject, command)">
                         <span class="cursor-pointer text-primary-600">
-                          <el-icon><MoreFilled /></el-icon>
+                          <el-icon>
+                            <MoreFilled />
+                          </el-icon>
                         </span>
                         <template #dropdown>
                           <el-dropdown-menu>
@@ -159,7 +160,7 @@
 </template>
 
 <script setup lang="ts">
-import { Document, Tickets, Plus, ChatLineSquare, MoreFilled } from '@element-plus/icons-vue';
+import { Document, Tickets, Plus, ChatLineSquare, MoreFilled, View } from '@element-plus/icons-vue';
 import type { SubProject, SubProjectContent, TextCommand } from '@/types';
 import ExpiryStatus from '@/components/content/ExpiryStatus.vue';
 
