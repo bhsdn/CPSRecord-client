@@ -7,6 +7,7 @@ export interface ContentType {
   hasExpiry: boolean;
   isSystem: boolean;
   description?: string;
+  defaultShowInDocumentation?: boolean;
 }
 
 export interface SubProjectContent {
@@ -14,6 +15,7 @@ export interface SubProjectContent {
   subProjectId: number;
   contentType: ContentType;
   contentValue: string;
+  showInDocumentation?: boolean;
   uploadedImageId?: number;
   uploadedImage?: {
     id: number;
